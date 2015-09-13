@@ -44,6 +44,7 @@ sys.path.append(normpath(join(PROJECT_ROOT, 'apps')))
 DEFAULT_APPS = [
     'suit',
     'redactor',
+    'django_forms_bootstrap',
     'django_wysiwyg',
     'django.contrib.admin',
     'django.contrib.auth',
@@ -144,7 +145,7 @@ USE_TZ = True
 CACHES = {
     'default': {
         'BACKEND': 'redis_cache.RedisCache',
-        'LOCATION': '/var/run/redis/redis.sock',
+        'LOCATION': 'localhost:6379',
     },
 }
 
