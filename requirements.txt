@@ -3,5 +3,7 @@ Django-suit
 django-wysiwyg-redactor
 django-wysiwyg
 django-jsonfield
+django-redis-cache
+django-redis-sessions
 Pillow
 psycopg2

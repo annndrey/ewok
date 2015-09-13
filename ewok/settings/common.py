@@ -141,6 +141,18 @@ USE_L10N = True
 # enable timezone awareness by default
 USE_TZ = True
 
+CACHES = {
+    'default': {
+        'BACKEND': 'redis_cache.RedisCache',
+        'LOCATION': '/var/run/redis/redis.sock',
+    },
+}
+
+SESSION_ENGINE = 'redis_sessions.session'
+SESSION_REDIS_HOST = 'localhost'
+SESSION_REDIS_PORT = 6379
+SESSION_REDIS_DB = 1
+SESSION_REDIS_PREFIX = 'session'
 
 # Finally grab the SECRET KEY
 if exists(SECRET_FILE):

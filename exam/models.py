@@ -23,6 +23,7 @@ def remove_tags(text):
 class Test(models.Model):
     title = models.CharField(max_length=255, verbose_name=u"Название")
     func = models.TextField(blank=False, default=default_func)
+    timeout = models.TimeField(verbose_name=u"Максимальное время выполнения")
 
     class Meta:
         verbose_name = u"Тест"
@@ -70,3 +71,23 @@ class Variant(models.Model):
 
     def __unicode__(self):
         return u"({0.value}) {0.text}".format(self)
+
+
+class Student(models.Model):
+    GENDER = {
+        "male": u"Мужской",
+        "female": u"Женский",
+    }
+
+    surname = models.CharField(max_length=60, verbose_name=u"фамилия", db_index=True)
+    name = models.CharField(max_length=60, verbose_name=u"имя", db_index=True)
+    middlename = models.CharField(max_length=60, verbose_name=u"отчество", db_index=True)
+    group = models.CharField(max_length=60, verbose_name=u"группа", db_index=True)
+    age = models.PositiveSmallIntegerField(verbose_name=u"возраст", db_index=True)
+    gender = models.PositiveSmallIntegerField(choices=GENDER.items(), db_index=True)
+
+    class Meta:
+        unique_together = (
+            ('surname', 'middlename', 'name'),
+        )
+
