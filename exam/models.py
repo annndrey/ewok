@@ -34,7 +34,7 @@ class Test(models.Model):
 
     def save(self, force_insert=False, force_update=False, using=None, update_fields=None):
         execute(self.func, args=[[]])
-        super(Test, self).save()
+        return super(Test, self).save()
 
 
 class Question(models.Model):
@@ -79,11 +79,13 @@ class Student(models.Model):
         "female": u"Женский",
     }
 
+    AGES = [(i, i) for i in xrange(0, 125)]
+
     surname = models.CharField(max_length=60, verbose_name=u"фамилия", db_index=True)
     name = models.CharField(max_length=60, verbose_name=u"имя", db_index=True)
     middlename = models.CharField(max_length=60, verbose_name=u"отчество", db_index=True)
     group = models.CharField(max_length=60, verbose_name=u"группа", db_index=True)
-    age = models.PositiveSmallIntegerField(verbose_name=u"возраст", db_index=True)
+    age = models.PositiveSmallIntegerField(verbose_name=u"возраст", db_index=True, choices=AGES)
     gender = models.PositiveSmallIntegerField(choices=GENDER.items(), db_index=True)
 
     class Meta:
@@ -91,3 +93,10 @@ class Student(models.Model):
             ('surname', 'middlename', 'name'),
         )
 
+    def save(self, force_insert=False, force_update=False, using=None,
+             update_fields=None):
+
+        self.name = self.name.strip(' ')
+        self.middlename = self.middlename.strip(' ')
+        self.surname = self.surname.strip(' ')
+        return super(Student, self).save()
