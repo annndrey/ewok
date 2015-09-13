@@ -87,7 +87,7 @@ class Student(models.Model):
     middlename = models.CharField(max_length=60, verbose_name=u"отчество", db_index=True, null=False, blank=False)
     group = models.CharField(max_length=60, verbose_name=u"группа", db_index=True, null=False, blank=False)
     age = models.PositiveSmallIntegerField(verbose_name=u"возраст", db_index=True, null=False, blank=False)
-    gender = models.BooleanField(choices=GENDER.items(), db_index=True, null=False, blank=False)
+    sex = models.BooleanField(choices=GENDER.items(), db_index=True, null=False, blank=False)
 
     class Meta:
         unique_together = (
