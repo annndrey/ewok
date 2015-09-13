@@ -1,4 +1,5 @@
 # encoding: utf-8
+from django.core.exceptions import ValidationError
 from jsonfield import JSONField
 import re
 from exam.lib.nodeproxy import execute
@@ -55,12 +56,14 @@ class Question(models.Model):
     def __unicode__(self):
         return u"{0}".format(remove_tags(self.description).strip(" "))
 
+    def save(self, force_insert=False, force_update=False, using=None, update_fields=None):
+        if self.type == 2 and self.variant_set:
+            raise ValidationError(u"У ответа в свободной форме не может быть")
+
+        return super(Question, self).save()
+
 
 class Variant(models.Model):
-    # TYPES = {
-    # }
-    #
-    # type = models.PositiveSmallIntegerField(choices=TYPES.items())
     question = models.ForeignKey('Question')
     text = models.CharField(max_length=512, verbose_name=u"Вариант ответа")
     value = JSONField(verbose_name=u"Коэффициент")
@@ -100,3 +103,9 @@ class Student(models.Model):
         self.middlename = self.middlename.strip(' ')
         self.surname = self.surname.strip(' ')
         return super(Student, self).save()
+
+
+class TestResult(models.Model):
+    student = models.ForeignKey(Student, verbose_name=u"студент")
+    answers = JSONField(verbose_name=u'результаты')
+    result = JSONField(verbose_name=u'результаты')
