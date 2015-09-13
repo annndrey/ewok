@@ -28,3 +28,14 @@ ALLOWED_HOSTS = [
     'psy-point.ru',
     '95.213.200.78'
 ]
+
+
+CACHES = {
+    'default': {
+        'BACKEND': 'redis_cache.RedisCache',
+        'LOCATION': 'localhost:6379',
+        'OPTIONS': {
+            'DB': 2,
+        },
+    },
+}

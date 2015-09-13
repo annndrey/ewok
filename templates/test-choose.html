@@ -1,13 +1,22 @@
 {% extends "base.html" %}
 
-{% block title %}Тест - {{ '' }}{% endblock %}
+{% load bootstrap3 %}
+
+{% block title %}Список тестов{% endblock %}
 
 {% block content %}
-    <select class="form-control">
-        <option>1</option>
-        <option>2</option>
-        <option>3</option>
-        <option>4</option>
-        <option>5</option>
-    </select>
+    <div class="col-md-10 col-md-offset-1">
+        <div class="well col-md-12">
+          <form class="form-horizontal" method="post">
+            {% csrf_token %}
+            {% bootstrap_form form layout='horizontal' %}
+            <div class="form-group">
+              <div class="col-sm-offset-2 col-sm-10">
+                <button type="submit" class="btn btn-success">Начать</button>
+              </div>
+            </div>
+            {% csrf_token %}
+          </form>
+        </div>
+    </div>
 {% endblock %}

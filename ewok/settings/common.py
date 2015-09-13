@@ -44,7 +44,7 @@ sys.path.append(normpath(join(PROJECT_ROOT, 'apps')))
 DEFAULT_APPS = [
     'suit',
     'redactor',
-    'django_forms_bootstrap',
+    'bootstrap3',
     'django_wysiwyg',
     'django.contrib.admin',
     'django.contrib.auth',
@@ -141,13 +141,6 @@ USE_L10N = True
 
 # enable timezone awareness by default
 USE_TZ = True
-
-CACHES = {
-    'default': {
-        'BACKEND': 'redis_cache.RedisCache',
-        'LOCATION': 'localhost:6379',
-    },
-}
 
 SESSION_ENGINE = 'redis_sessions.session'
 SESSION_REDIS_HOST = 'localhost'

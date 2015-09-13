@@ -5,6 +5,6 @@ django-wysiwyg
 django-jsonfield
 django-redis-cache
 django-redis-sessions
-django-forms-bootstrap
+django-bootstrap3
 Pillow
 psycopg2

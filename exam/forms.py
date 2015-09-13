@@ -1,9 +1,17 @@
 #!/usr/bin/env python
 # encoding: utf-8
 from django import forms
+from .models import Student
 
 
 class RegisterForm(forms.Form):
-    name = forms.CharField(label=u'Имя', max_length=100)
+    surname = forms.CharField(label=u'Фамилия', max_length=100)
+    name = forms.CharField(label=u'Имя', max_length=100,)
     middlename = forms.CharField(label=u'Отчество', max_length=100)
-    surname = forms.CharField(label=u'Группа', max_length=100)
+    group = forms.CharField(label=u'Группа', max_length=100)
+    age = forms.IntegerField(initial=10, label=u"Возраст", min_value=0, max_value=125)
+    gender = forms.ChoiceField(choices=Student.GENDER.items(), label=u"Пол")
+
+
+class ChooseTestForm(forms.Form):
+    pass
