@@ -1,5 +1,4 @@
 # encoding: utf-8
-import datetime
 from django.shortcuts import render, HttpResponseRedirect
 from django.views.decorators.csrf import csrf_protect
 from .forms import RegisterForm, ChooseTestForm
