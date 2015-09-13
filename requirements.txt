@@ -1,2 +1,5 @@
 Django
 Django-suit
+django-wysiwyg-redactor
+Pillow
+psycopg2

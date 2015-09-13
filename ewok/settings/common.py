@@ -43,13 +43,19 @@ sys.path.append(normpath(join(PROJECT_ROOT, 'apps')))
 # This are the apps
 DEFAULT_APPS = [
     'suit',
+    'redactor',
+    'django_wysiwyg',
     'django.contrib.admin',
     'django.contrib.auth',
     'django.contrib.contenttypes',
     'django.contrib.sessions',
     'django.contrib.messages',
     'django.contrib.staticfiles',
+    'exam',
 ]
+
+REDACTOR_OPTIONS = {'lang': 'ru'}
+REDACTOR_UPLOAD = 'uploads/'
 
 # Middlewares
 MIDDLEWARE_CLASSES = [
@@ -73,6 +79,7 @@ TEMPLATES = [
             'context_processors': [
                 'django.contrib.auth.context_processors.auth',
                 'django.template.context_processors.debug',
+                'django.core.context_processors.request',
                 'django.template.context_processors.i18n',
                 'django.template.context_processors.media',
                 'django.template.context_processors.static',
