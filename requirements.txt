@@ -1,5 +1,7 @@
 Django
 Django-suit
 django-wysiwyg-redactor
+django-wysiwyg
+django-jsonfield
 Pillow
 psycopg2

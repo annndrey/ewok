@@ -25,3 +25,8 @@ DATABASES = {
 INSTALLED_APPS = DEFAULT_APPS
 
 NODE_EXEC = 'nodejs'
+ALLOWED_HOSTS = [
+    'test.psy-point.ru',
+    'psy-point.ru',
+    '95.213.200.78'
+]
