@@ -11,7 +11,3 @@ class RegisterForm(forms.Form):
     group = forms.CharField(label=u'Группа', max_length=100)
     age = forms.IntegerField(initial=10, label=u"Возраст", min_value=0, max_value=125)
     sex = forms.ChoiceField(choices=Student.GENDER.items(), label=u"Пол")
-
-
-class ChooseTestForm(forms.Form):
-    pass

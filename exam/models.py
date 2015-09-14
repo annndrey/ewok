@@ -25,6 +25,8 @@ class Test(models.Model):
     title = models.CharField(max_length=255, verbose_name=u"Название")
     func = models.TextField(blank=False, default=default_func)
     timeout = models.TimeField(verbose_name=u"Максимальное время выполнения")
+    disabled = models.BooleanField(verbose_name=u"Отключен", db_index=True)
+    priority = models.IntegerField(default=1000, verbose_name=u"Приоритет сортировки", db_index=True)
 
     class Meta:
         verbose_name = u"Тест"

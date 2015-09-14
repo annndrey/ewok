@@ -13,7 +13,7 @@ class QuestionChouces(admin.StackedInline):
 class TestAdmin(admin.ModelAdmin):
     # fields = ['title', 'questions']
     fieldsets = [
-        (None, {'fields': ['title', 'func']}),
+        (None, {'fields': ['disabled', 'title', 'timeout', 'func', 'priority']}),
     ]
 
 
