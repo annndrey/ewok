@@ -86,25 +86,30 @@ def start_test(request, test_id):
     elif current and int(current) != test_id:
         return HttpResponseRedirect('/tests/%s/' % current)
 
-    try:
-        test = Test.objects.get(id=request.session['current_test'])
+    if request.method == 'POST':
         questions = request.session['current_test_questions']
         question = Question.objects.get(id=questions[request.session['current_test_question']])
-        position = question + 1
-    except Test.DoesNotExist:
-        for k in ('current_test_questions', 'current_test_question', 'current_test'):
-            if k in request.session:
-                request.session.pop(k)
 
-        return HttpResponseRedirect("/tests/")
-
-    if request.method == 'POST':
         if question.type == 0:
             answer = int(request.POST['variant'][0])
         elif question.type == 1:
             answer = [int(i) for i in request.POST['variant']]
         elif question.type == 2:
             answer = request.POST['text']
+
+        request.session['current_test_question'] += 1
+
+    try:
+        test = Test.objects.get(id=request.session['current_test'])
+        questions = request.session['current_test_questions']
+        question = Question.objects.get(id=questions[request.session['current_test_question']])
+        position = request.session['current_test_question'] + 1
+    except Test.DoesNotExist:
+        for k in ('current_test_questions', 'current_test_question', 'current_test'):
+            if k in request.session:
+                request.session.pop(k)
+
+        return HttpResponseRedirect("/tests/")
 
     return render(request, 'test-start.html', dict(
         test=test,

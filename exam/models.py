@@ -112,5 +112,6 @@ class Student(models.Model):
 
 class TestResult(models.Model):
     student = models.ForeignKey(Student, verbose_name=u"студент")
+    test = models.ForeignKey(Test, verbose_name=u"Тест")
     answers = JSONField(verbose_name=u'результаты')
     result = JSONField(verbose_name=u'результаты')
