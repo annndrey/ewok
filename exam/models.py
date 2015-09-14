@@ -1,4 +1,5 @@
 # encoding: utf-8
+import datetime
 from django.core.exceptions import ValidationError
 from jsonfield import JSONField
 import re
@@ -24,8 +25,8 @@ def remove_tags(text):
 class Test(models.Model):
     title = models.CharField(max_length=255, verbose_name=u"Название")
     func = models.TextField(blank=False, default=default_func)
-    timeout = models.TimeField(verbose_name=u"Максимальное время выполнения")
-    disabled = models.BooleanField(verbose_name=u"Отключен", db_index=True)
+    timeout = models.TimeField(verbose_name=u"Максимальное время выполнения", default=datetime.time(0,40,0))
+    disabled = models.BooleanField(verbose_name=u"Отключен", db_index=True, default=True)
     priority = models.IntegerField(default=1000, verbose_name=u"Приоритет сортировки", db_index=True)
 
     class Meta:
@@ -48,12 +49,16 @@ class Question(models.Model):
     }
 
     test = models.ForeignKey("Test")
+    number = models.PositiveSmallIntegerField(verbose_name=u'Порядок вопроса')
     description = RedactorField(verbose_name=u"Описание")
     type = models.PositiveSmallIntegerField(choices=TYPES.items(), db_index=True, verbose_name=u"Тип")
 
     class Meta:
         verbose_name = u"Вопрос"
         verbose_name_plural = u"Вопросы"
+        unique_together = (
+            ("test", "number"),
+        )
 
     def __unicode__(self):
         return u"{0}".format(remove_tags(self.description).strip(" "))
@@ -75,7 +80,7 @@ class Variant(models.Model):
         verbose_name_plural = u"Варианты ответов"
 
     def __unicode__(self):
-        return u"({0.value}) {0.text}".format(self)
+        return u"[{1}...] {0.text}".format(self, remove_tags(self.question.description).strip('. ')[:20])
 
 
 class Student(models.Model):

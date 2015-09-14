@@ -20,7 +20,7 @@ class TestAdmin(admin.ModelAdmin):
 @admin.register(Question)
 class QuestionAdmin(admin.ModelAdmin):
     fieldsets = [
-        (None, {'fields': ['test', 'type', 'description']}),
+        (None, {'fields': ['test', 'type', 'number', 'description']}),
     ]
 
     list_display = ['__unicode__', 'test']

@@ -1,5 +1,6 @@
 # encoding: utf-8
 from functools import wraps
+from django.core.exceptions import ObjectDoesNotExist
 from django.http import HttpResponseGone
 from django.shortcuts import render_to_response
 from django.shortcuts import render, HttpResponseRedirect, Http404
@@ -14,12 +15,15 @@ def check_student(func):
         student = request.session.get('student', None)
         try:
             student = Student.objects.get(id=int(student))
-        except Student.DoesNotExist:
+        except:
             student = None
 
         if student:
             request.student = student
-            return func(request, *args, **kwargs)
+            try:
+                return func(request, *args, **kwargs)
+            except ObjectDoesNotExist:
+                raise Http404()
         else:
             return HttpResponseRedirect("/")
 
@@ -67,37 +71,42 @@ def choose_test(request):
     return render(request, "test-choose.html", dict(tests=tests))
 
 
+@csrf_protect
 @check_student
 def start_test(request, test_id):
     test_id = int(test_id)
     current = request.session.get('current_test', None)
 
     if not current:
-        try:
-            test = Test.objects.get(disabled=False, id=test_id)
-            request.session['current_test'] = test.pk
-            questions = [q.id for q in test.question_set.all().order_by('?')]
-            request.session['current_test_questions_ordering'] = questions
-            request.session['current_test_question'] = questions[0]
-        except Test.DoesNotExist:
-            return Http404()
-        except:
-            return HttpResponseGone()
-
+        test = Test.objects.get(disabled=False, id=test_id)
+        request.session['current_test'] = test.pk
+        questions = [q.id for q in test.question_set.all().order_by('number')]
+        request.session['current_test_questions'] = questions
+        request.session['current_test_question'] = 0
     elif current and int(current) != test_id:
         return HttpResponseRedirect('/tests/%s/' % current)
 
-    test = Test.objects.get(id=request.session['current_test'])
-    questions = request.session['current_test_questions_ordering']
-    question = request.session['current_test_question']
-    position = questions.index(question)
+    try:
+        test = Test.objects.get(id=request.session['current_test'])
+        questions = request.session['current_test_questions']
+        question = Question.objects.get(id=questions[request.session['current_test_question']])
+        position = question + 1
+    except Test.DoesNotExist:
+        for k in ('current_test_questions', 'current_test_question', 'current_test'):
+            if k in request.session:
+                request.session.pop(k)
+
+        return HttpResponseRedirect("/tests/")
 
     if request.method == 'POST':
-        pass
+        if question.type == 0:
+            answer = int(request.POST['variant'][0])
+        elif question.type == 1:
+            answer = [int(i) for i in request.POST['variant']]
+        elif question.type == 2:
+            answer = request.POST['text']
 
-    question = Question.objects.get(id=question)
-
-    return render_to_response('test-start.html', dict(
+    return render(request, 'test-start.html', dict(
         test=test,
         question=question,
         position=(position + 1),
