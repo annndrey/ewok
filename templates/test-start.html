@@ -2,25 +2,46 @@
 
 {% load bootstrap3 %}
 
-{% block title %}Список тестов{% endblock %}
+{% block title %}[Тест] {{ test.title }}{% endblock %}
 
 {% block content %}
     <div class="col-md-10 col-md-offset-1">
-        {% for test in tests %}
+        <h4 align="center">Вопрос {{ position }} из {{ questions_len }}</h4>
         <div class="well col-md-12">
-             <h4 align="center">{{ test.title }}</h4>
-            <table class="table">
-                <tr>
-                    <td>Максимальное время выполнения</td>
-                    <td>{{ test.timeout }}</td>
-                </tr>
-                <tr>
-                    <td>Количество вопросов</td>
-                    <td>{{ test.question_set.count }}</td>
-                </tr>
-            </table>
-            <a class="pull-right col-sm-3 btn btn-success" href="/tests/{{ test.pk }}/">Начать</a>
+            {{ question.description|safe }}
         </div>
-        {% endfor %}
+
+        {% if question.type == 0 %}<h4 align="center">Выберите один из вариантов ответа</h4>{% endif %}
+        {% if question.type == 1 %}<h4 align="center">Выберите один или несколько вариантов ответа</h4>{% endif %}
+        {% if question.type == 2 %}<h4 align="center">Напишите ответ в свободной форме</h4>{% endif %}
+
+        <form method="post">
+            <div class="well col-md-12">
+                {% if question.type == 0 %}
+                    {% for variant in question.variant_set.all %}
+                        <div class="radio col-sm-12">
+                            <label>
+                                <input type="radio" name="variant" id="{{ variant.id }}" value="{{ variant.id }}">
+                                {{ variant.text }}
+                            </label>
+                        </div>
+                    {% endfor %}
+                {% endif %}
+                {% if question.type == 1 %}
+                    {% for variant in question.variant_set.all %}
+                        <div class="checkbox col-sm-12">
+                            <label>
+                                <input type="checkbox" name="variant" id="{{ variant.id }}" value="{{ variant.id }}">
+                                {{ variant.text }}
+                            </label>
+                        </div>
+                    {% endfor %}
+                {% endif %}
+                {% if question.type == 2 %}
+                    <textarea class="form-control" rows="3" name="text"></textarea>
+                {% endif %}
+            </div>
+            <button type="submit" class="pull-right col-sm-3 btn btn-success">Ответить</button>
+        </form>
     </div>
 {% endblock %}

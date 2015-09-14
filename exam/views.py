@@ -1,10 +1,11 @@
 # encoding: utf-8
 from functools import wraps
+from django.http import HttpResponseGone
 from django.shortcuts import render_to_response
 from django.shortcuts import render, HttpResponseRedirect, Http404
 from django.views.decorators.csrf import csrf_protect
 from .forms import RegisterForm
-from .models import Student, Test
+from .models import Student, Test, Question
 
 
 def check_student(func):
@@ -57,6 +58,10 @@ def index(request):
 @csrf_protect
 @check_student
 def choose_test(request):
+    current = request.session.get('current_test', None)
+    if current:
+        return HttpResponseRedirect('/tests/%s/' % current)
+
     tests = Test.objects.filter(disabled=False).order_by('priority')
 
     return render(request, "test-choose.html", dict(tests=tests))
@@ -64,17 +69,37 @@ def choose_test(request):
 
 @check_student
 def start_test(request, test_id):
-    current = request.session.get('current_test')
-    if current and int(current) != test_id:
+    test_id = int(test_id)
+    current = request.session.get('current_test', None)
+
+    if not current:
+        try:
+            test = Test.objects.get(disabled=False, id=test_id)
+            request.session['current_test'] = test.pk
+            questions = [q.id for q in test.question_set.all().order_by('?')]
+            request.session['current_test_questions_ordering'] = questions
+            request.session['current_test_question'] = questions[0]
+        except Test.DoesNotExist:
+            return Http404()
+        except:
+            return HttpResponseGone()
+
+    elif current and int(current) != test_id:
         return HttpResponseRedirect('/tests/%s/' % current)
 
-    try:
-        test = Test.objects.get(disabled=False, id=test_id)
-    except Test.DoesNotExist:
-        return Http404()
+    test = Test.objects.get(id=request.session['current_test'])
+    questions = request.session['current_test_questions_ordering']
+    question = request.session['current_test_question']
+    position = questions.index(question)
 
-    request.session['current_test'] = test.pk
-    questions = [q.id for q in test.question_set.all().order_by('?')]
-    request.session['test_questions_ordering'] = questions
+    if request.method == 'POST':
+        pass
 
-    return render_to_response('test-start.html')
+    question = Question.objects.get(id=question)
+
+    return render_to_response('test-start.html', dict(
+        test=test,
+        question=question,
+        position=(position + 1),
+        questions_len=len(questions)
+    ))
