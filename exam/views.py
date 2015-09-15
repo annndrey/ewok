@@ -1,4 +1,5 @@
 # encoding: utf-8
+import uuid
 from functools import wraps
 from django.core.exceptions import ObjectDoesNotExist
 from django.shortcuts import render, HttpResponseRedirect, Http404
@@ -76,7 +77,7 @@ def choose_test(request):
 
 
 def cleanup(request):
-    for k in ('current_test_questions', 'current_test_question', 'current_test'):
+    for k in ('current_test_questions', 'current_test_question', 'current_test', 'uuid'):
         if k in request.session:
             request.session.pop(k)
 
@@ -112,12 +113,14 @@ def start_test(request, test_id):
         questions = [q.id for q in test.question_set.all().order_by('number')]
         request.session['current_test_questions'] = questions
         request.session['current_test_question'] = 0
+        request.session['uuid'] = str(uuid.uuid4())
     elif current and int(current) != test_id:
         return HttpResponseRedirect('/tests/%s/' % current)
     else:
         test = Test.objects.get(id=request.session['current_test'])
 
     result, is_new = TestResult.objects.get_or_create(
+        session=request.session['uuid'],
         student=request.student,
         test=test,
     )
