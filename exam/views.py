@@ -1,12 +1,12 @@
 # encoding: utf-8
 from functools import wraps
 from django.core.exceptions import ObjectDoesNotExist
-from django.http import HttpResponseGone
-from django.shortcuts import render_to_response
 from django.shortcuts import render, HttpResponseRedirect, Http404
 from django.views.decorators.csrf import csrf_protect
+from django.contrib import messages
 from .forms import RegisterForm
-from .models import Student, Test, Question
+from .models import Student, Test, Question, Variant, TestResult
+from .lib import nodeproxy
 
 
 def check_student(func):
@@ -71,6 +71,31 @@ def choose_test(request):
     return render(request, "test-choose.html", dict(tests=tests))
 
 
+def cleanup(request):
+    for k in ('current_test_questions', 'current_test_question', 'current_test'):
+        if k in request.session:
+            request.session.pop(k)
+
+
+def calculate_result(request, result, student, test):
+    result.result = nodeproxy.execute(
+        test.func,
+        g={
+            'student': {
+                'name': student.name,
+                'middlename': student.middlename,
+                'surname': student.surname,
+                'age': student.age,
+                'sex': student.sex,
+            }
+        },
+        args=[result.answers,]
+    )
+    result.save()
+
+    return render(request, "test-finished.html")
+
+
 @csrf_protect
 @check_student
 def start_test(request, test_id):
@@ -85,29 +110,55 @@ def start_test(request, test_id):
         request.session['current_test_question'] = 0
     elif current and int(current) != test_id:
         return HttpResponseRedirect('/tests/%s/' % current)
+    else:
+        test = Test.objects.get(id=request.session['current_test'])
+
+    result, is_new = TestResult.objects.get_or_create(
+        student=request.student,
+        test=test,
+    )
+
+    questions = request.session['current_test_questions']
 
     if request.method == 'POST':
-        questions = request.session['current_test_questions']
         question = Question.objects.get(id=questions[request.session['current_test_question']])
 
         if question.type == 0:
-            answer = int(request.POST['variant'][0])
+            if 'variant' not in request.POST:
+                messages.error(request, u"Выберите вариант ответа.")
+
+                return render(request, 'test-start.html', dict(
+                    test=test,
+                    question=question,
+                    position=(request.session['current_test_question'] + 1),
+                    questions_len=len(questions)
+                ))
+
+            answer = int(request.POST['variant'])
         elif question.type == 1:
             answer = [int(i) for i in request.POST['variant']]
         elif question.type == 2:
             answer = request.POST['text']
 
+        variant = Variant.objects.get(id=answer)
+
+        result.answers.append({
+            'question': question.id,
+            'answer': variant.value,
+        })
+
         request.session['current_test_question'] += 1
 
+    if len(questions) <= request.session['current_test_question']:
+        cleanup(request)
+        return calculate_result(request, result, request.student, test)
+
     try:
-        test = Test.objects.get(id=request.session['current_test'])
         questions = request.session['current_test_questions']
         question = Question.objects.get(id=questions[request.session['current_test_question']])
-        position = request.session['current_test_question'] + 1
+        position = request.session['current_test_question']
     except Test.DoesNotExist:
-        for k in ('current_test_questions', 'current_test_question', 'current_test'):
-            if k in request.session:
-                request.session.pop(k)
+        cleanup(request)
 
         return HttpResponseRedirect("/tests/")
 

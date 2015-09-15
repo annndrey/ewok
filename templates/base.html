@@ -15,6 +15,14 @@
       </div>
     </div>
 
+    {% if messages %}{% for message in messages %}
+    <div class="alert{% if message.tags %} alert-{{ message.level_tag.lower }}{% endif %}" role="alert">
+        <span class="glyphicon glyphicon-exclamation-sign" aria-hidden="true"></span>
+        <span class="sr-only">{{ message.level_tag.capitalize }}:</span>
+        {{ message }}
+    </div>
+    {% endfor %}{% endif %}
+
     {% block content %}{% endblock %}
 </body>
 </html>

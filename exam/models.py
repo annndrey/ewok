@@ -111,7 +111,12 @@ class Student(models.Model):
 
 
 class TestResult(models.Model):
-    student = models.ForeignKey(Student, verbose_name=u"студент")
-    test = models.ForeignKey(Test, verbose_name=u"Тест")
-    answers = JSONField(verbose_name=u'результаты')
+    student = models.ForeignKey(Student, verbose_name=u"студент", db_index=True)
+    test = models.ForeignKey(Test, verbose_name=u"Тест", db_index=True)
+    answers = JSONField(verbose_name=u'результаты', default=[])
     result = JSONField(verbose_name=u'результаты')
+
+    class Meta:
+        unique_together = (
+            ('student', 'test'),
+        )

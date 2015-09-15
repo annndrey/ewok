@@ -1,6 +1,7 @@
 # Import sys (to adjust Python path)
 import sys
 # Import some utility functions
+from django.contrib import messages
 from os.path import abspath, basename, dirname, join, normpath, exists
 from random import choice
 
@@ -61,6 +62,7 @@ REDACTOR_UPLOAD = 'uploads/'
 # Middlewares
 MIDDLEWARE_CLASSES = [
     'django.contrib.sessions.middleware.SessionMiddleware',
+    'django.contrib.messages.middleware.MessageMiddleware',
     'django.middleware.common.CommonMiddleware',
     'django.middleware.csrf.CsrfViewMiddleware',
     'django.contrib.auth.middleware.AuthenticationMiddleware',
@@ -147,6 +149,10 @@ SESSION_REDIS_HOST = 'localhost'
 SESSION_REDIS_PORT = 6379
 SESSION_REDIS_DB = 1
 SESSION_REDIS_PREFIX = 'session'
+
+MESSAGE_TAGS = {
+    messages.ERROR: 'danger'
+}
 
 # Finally grab the SECRET KEY
 if exists(SECRET_FILE):
