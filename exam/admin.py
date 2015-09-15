@@ -1,12 +1,27 @@
 # encoding: utf-8
 # Register your models here.
 from django.contrib import admin
-from .models import Test, Question, Variant
+from .models import Test, Question, Variant, TestResult
 
 
-class QuestionChouces(admin.StackedInline):
+class DeleteNotAllowedModelAdmin(admin.ModelAdmin):
+    def has_delete_permission(self, request, obj=None):
+        return False
+
+
+class VariantsChouces(admin.StackedInline):
     model = Variant
     extra = 1
+
+
+class QuestionChoices(admin.StackedInline):
+    model = Question
+    extra = 0
+    max_num = 0
+    show_change_link = 1
+    readonly_fields = ('description', 'type')
+    can_delete = False
+    ordering = ('number',)
 
 
 @admin.register(Test)
@@ -16,6 +31,8 @@ class TestAdmin(admin.ModelAdmin):
         (None, {'fields': ['disabled', 'title', 'timeout', 'func', 'priority']}),
     ]
 
+    inlines = (QuestionChoices,)
+
 
 @admin.register(Question)
 class QuestionAdmin(admin.ModelAdmin):
@@ -24,10 +41,14 @@ class QuestionAdmin(admin.ModelAdmin):
     ]
 
     list_display = ['__unicode__', 'test']
+    list_editable = ['test']
+    list_filter = ['test', 'type']
 
-    inlines = (QuestionChouces,)
+    inlines = (VariantsChouces,)
 
 
-# @admin.register(QuestionVariant)
-# class QuestionVariantAdmin(admin.ModelAdmin):
-#     pass
+@admin.register(TestResult)
+class TestResultAdmin(DeleteNotAllowedModelAdmin):
+    readonly_fields = ('timestamp', 'student', 'test', 'answers', 'result')
+    list_display = ('timestamp', 'student', 'test')
+    list_filter = ('timestamp', 'student', 'test', 'student__group')

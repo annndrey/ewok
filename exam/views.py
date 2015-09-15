@@ -23,7 +23,7 @@ def check_student(func):
             try:
                 return func(request, *args, **kwargs)
             except ObjectDoesNotExist:
-                raise Http404()
+                return logout(request)
         else:
             return HttpResponseRedirect("/")
 
@@ -37,6 +37,7 @@ def index(request):
     if request.method == 'POST':
         form = RegisterForm(request.POST)
         if not form.is_valid():
+            messages.error(request, u"Форма заполнена не верно")
             return render(request, 'register.html', dict(form=RegisterForm))
 
         student_data = {
@@ -68,7 +69,10 @@ def choose_test(request):
 
     tests = Test.objects.filter(disabled=False).order_by('priority')
 
-    return render(request, "test-choose.html", dict(tests=tests))
+    return render(request, "test-choose.html", dict(
+        student=request.student,
+        tests=tests,
+    ))
 
 
 def cleanup(request):
@@ -93,7 +97,7 @@ def calculate_result(request, result, student, test):
     )
     result.save()
 
-    return render(request, "test-finished.html")
+    return render(request, "test-finished.html", dict(student=request.student))
 
 
 @csrf_protect
@@ -147,6 +151,8 @@ def start_test(request, test_id):
             'answer': variant.value,
         })
 
+        result.save()
+
         request.session['current_test_question'] += 1
 
     if len(questions) <= request.session['current_test_question']:
@@ -166,5 +172,11 @@ def start_test(request, test_id):
         test=test,
         question=question,
         position=(position + 1),
-        questions_len=len(questions)
+        questions_len=len(questions),
+        student=request.student,
     ))
+
+
+def logout(request):
+    request.session.clear()
+    return HttpResponseRedirect("/")

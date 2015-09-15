@@ -9,20 +9,33 @@
     <title>{% block title %}{% endblock %}</title>
 </head>
 <body>
-    <div class="navbar navbar-inverse">
-      <div class="navbar-header">
+<div class="navbar navbar-inverse">
+    <div class="navbar-header col-sm-4 hidden-xs">
         <a class="navbar-brand" href="#">PSY-Point.ru</a>
-      </div>
     </div>
+    {% if student %}
+    <div class="col-sm-8" align="right" style="display:block; margin: 7px 0;">
+        <div class="btn-group" role="group">
+          <button type="button" class="btn btn-default" disabled>
+              {{ student.surname }}
+              {{ student.name }}
+              {{ student.middlename }}
+              [{{ student.group }}]
+          </button>
+          <a class="btn btn-primary" href="/logout">Выход с сайта</a>
+        </div>
+    </div>
+{% endif %}
+</div>
 
-    {% if messages %}{% for message in messages %}
-    <div class="alert{% if message.tags %} alert-{{ message.level_tag.lower }}{% endif %}" role="alert">
+{% if messages %}{% for message in messages %}
+    <div class="alert{% if message.tags %} alert-{{ message.level_tag.lower }}{% endif %} col-md-push-1 col-md-10" role="alert">
         <span class="glyphicon glyphicon-exclamation-sign" aria-hidden="true"></span>
         <span class="sr-only">{{ message.level_tag.capitalize }}:</span>
         {{ message }}
     </div>
-    {% endfor %}{% endif %}
+{% endfor %}{% endif %}
 
-    {% block content %}{% endblock %}
+{% block content %}{% endblock %}
 </body>
 </html>

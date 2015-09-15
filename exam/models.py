@@ -1,8 +1,9 @@
 # encoding: utf-8
 import datetime
+import random
+import re
 from django.core.exceptions import ValidationError
 from jsonfield import JSONField
-import re
 from exam.lib.nodeproxy import execute
 from django.db import models
 from redactor.fields import RedactorField
@@ -109,14 +110,33 @@ class Student(models.Model):
         self.surname = self.surname.strip(' ')
         return super(Student, self).save()
 
+    def __unicode__(self):
+        return u"{0.surname} {0.name} {0.middlename} [{0.group}]".format(self)
+
 
 class TestResult(models.Model):
+    session = models.CharField(
+        verbose_name=u"сеанс",
+        null=True,
+        editable=False,
+        max_length=128,
+        default=None
+    )
+    timestamp = models.DateTimeField(
+        auto_created=True,
+        verbose_name=u"время прохождения теста",
+        editable=False,
+        db_index=True,
+        default=datetime.datetime.now()
+    )
     student = models.ForeignKey(Student, verbose_name=u"студент", db_index=True)
     test = models.ForeignKey(Test, verbose_name=u"Тест", db_index=True)
     answers = JSONField(verbose_name=u'результаты', default=[])
     result = JSONField(verbose_name=u'результаты')
 
+    def __unicode__(self):
+        return u"{0.timestamp} {0.student.surname} {0.student.name} {0.student.middlename}".format(self)
+
     class Meta:
-        unique_together = (
-            ('student', 'test'),
-        )
+        verbose_name = u"Результат тестирования"
+        verbose_name_plural = u"Результаты тестирования"
