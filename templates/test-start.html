@@ -5,9 +5,10 @@
 {% block title %}Тест №{{ test.id }}{% endblock %}
 
 {% block content %}
-    <div class="col-md-10 col-md-offset-1">
+    <div class="col-sm-10 col-sm-offset-1">
         <h4 align="center">Вопрос {{ position }} из {{ questions_len }}</h4>
-        <div class="well col-md-12">
+
+        <div class="well">
             {{ question.description|safe }}
         </div>
 
@@ -41,8 +42,9 @@
                 {% if question.type == 2 %}
                     <textarea class="form-control" rows="3" name="text"></textarea>
                 {% endif %}
+                <div style="clear: both"></div>
             </div>
-            <button type="submit" class="pull-right col-sm-3 btn btn-success">Ответить</button>
+            <button type="submit" class="pull-right col-sm-3 col-xs-12 btn btn-success">Ответить</button>
         </form>
     </div>
 {% endblock %}

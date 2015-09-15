@@ -28,6 +28,7 @@ class Test(models.Model):
     func = models.TextField(blank=False, default=default_func)
     timeout = models.TimeField(verbose_name=u"Максимальное время выполнения", default=datetime.time(0,40,0))
     disabled = models.BooleanField(verbose_name=u"Отключен", db_index=True, default=True)
+    description = RedactorField(verbose_name=u"Описание", default='', blank=True)
     priority = models.IntegerField(default=1000, verbose_name=u"Приоритет сортировки", db_index=True)
 
     class Meta:
@@ -99,7 +100,7 @@ class Student(models.Model):
 
     class Meta:
         unique_together = (
-            ('surname', 'middlename', 'name'),
+            ('surname', 'middlename', 'name', 'group', 'age', 'sex'),
         )
 
     def save(self, force_insert=False, force_update=False, using=None,

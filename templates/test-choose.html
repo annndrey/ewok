@@ -8,7 +8,12 @@
     <div class="col-md-10 col-md-offset-1">
         {% for test in tests %}
         <div class="well col-md-12">
-             <h4 align="center">Тест №{{ test.id }}</h4>
+            <h4 align="center">Тест №{{ test.id }}</h4>
+            {% if test.description %}
+                <div class="well" style="background: #ffffff">
+                    {{ test.description|safe }}
+                </div>
+            {% endif %}
             <table class="table">
                 <tr>
                     <td>Максимальное время выполнения</td>
@@ -19,7 +24,7 @@
                     <td>{{ test.question_set.count }}</td>
                 </tr>
             </table>
-            <a class="pull-right col-sm-12 btn btn-success" href="/tests/{{ test.pk }}/">Начать</a>
+            <a class="pull-right col-sm-12 col-xs-12 btn btn-success" href="/tests/{{ test.pk }}/">Начать</a>
         </div>
         {% endfor %}
     </div>

@@ -35,6 +35,9 @@ def check_student(func):
 def index(request):
     current_student = request.session.get('student', None)
 
+    if current_student:
+        return HttpResponseRedirect("/tests/")
+
     if request.method == 'POST':
         form = RegisterForm(request.POST)
         if not form.is_valid():

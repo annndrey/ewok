@@ -28,7 +28,7 @@ class QuestionChoices(admin.StackedInline):
 class TestAdmin(admin.ModelAdmin):
     # fields = ['title', 'questions']
     fieldsets = [
-        (None, {'fields': ['disabled', 'title', 'timeout', 'func', 'priority']}),
+        (None, {'fields': ['disabled', 'title', 'description', 'timeout', 'func', 'priority']}),
     ]
 
     inlines = (QuestionChoices,)
