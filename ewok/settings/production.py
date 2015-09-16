@@ -4,7 +4,7 @@ from common import *
 # #########################################################
 
 # ##### DEBUG CONFIGURATION ###############################
-DEBUG = False
+DEBUG = True
 
 
 # ##### DATABASE CONFIGURATION ############################
