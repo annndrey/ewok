@@ -4,7 +4,7 @@ import json
 from subprocess import Popen, PIPE
 from django.conf import settings
 
-wrapper = '''
+wrapper = u'''
 (function run(globals) {
     try {
         console.log(JSON.stringify({"result": (%(func)s).apply(null, %(args)s)}))
@@ -39,14 +39,17 @@ def execute(code, args=None, g=None, node_exec=node):
         'args': json.dumps(args)
     }
 
-    prc.stdin.write(c)
+    prc.stdin.write(c.encode('utf-8'))
     prc.stdin.close()
     prc.wait()
 
     result = json.loads(prc.stdout.read())
 
     if 'result' in result:
-        return result.get('result')
+        result = result.get('result')
+        if isinstance(result, basestring):
+            result = json.dumps(result, ensure_ascii=False)
+        return result
     else:
         raise Exception((
             result.get('error'),

@@ -52,3 +52,6 @@ class TestResultAdmin(DeleteNotAllowedModelAdmin):
     readonly_fields = ('timestamp', 'student', 'test', 'answers', 'result')
     list_display = ('timestamp', 'student', 'test')
     list_filter = ('timestamp', 'student', 'test', 'student__group')
+
+    def save_model(self, request, obj, form, change):
+        obj.gen_result()

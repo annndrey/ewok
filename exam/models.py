@@ -1,6 +1,8 @@
 # encoding: utf-8
 import datetime
+import json
 import random
+from exam.lib import nodeproxy
 import re
 from django.core.exceptions import ValidationError
 from jsonfield import JSONField
@@ -132,11 +134,27 @@ class TestResult(models.Model):
     )
     student = models.ForeignKey(Student, verbose_name=u"студент", db_index=True)
     test = models.ForeignKey(Test, verbose_name=u"Тест", db_index=True)
-    answers = JSONField(verbose_name=u'результаты', default=[])
-    result = JSONField(verbose_name=u'результаты')
+    answers = JSONField(verbose_name=u'результаты', default=[], indent=1)
+    result = JSONField(verbose_name=u'результаты', indent=1)
 
     def __unicode__(self):
         return u"{0.timestamp} {0.student.surname} {0.student.name} {0.student.middlename}".format(self)
+
+    def gen_result(self):
+        self.result = nodeproxy.execute(
+            self.test.func,
+            g={
+                'student': {
+                    'name': self.student.name,
+                    'middlename': self.student.middlename,
+                    'surname': self.student.surname,
+                    'age': self.student.age,
+                    'sex': self.student.sex,
+                }
+            },
+            args=[self.answers,]
+        )
+        self.save()
 
     class Meta:
         verbose_name = u"Результат тестирования"

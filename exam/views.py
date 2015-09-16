@@ -85,25 +85,6 @@ def cleanup(request):
             request.session.pop(k)
 
 
-def calculate_result(request, result, student, test):
-    result.result = nodeproxy.execute(
-        test.func,
-        g={
-            'student': {
-                'name': student.name,
-                'middlename': student.middlename,
-                'surname': student.surname,
-                'age': student.age,
-                'sex': student.sex,
-            }
-        },
-        args=[result.answers,]
-    )
-    result.save()
-
-    return render(request, "test-finished.html", dict(student=request.student))
-
-
 @csrf_protect
 @check_student
 def start_test(request, test_id):
@@ -163,7 +144,8 @@ def start_test(request, test_id):
 
     if len(questions) <= request.session['current_test_question']:
         cleanup(request)
-        return calculate_result(request, result, request.student, test)
+        result.gen_result()
+        return render(request, "test-finished.html", dict(student=request.student))
 
     try:
         questions = request.session['current_test_questions']
