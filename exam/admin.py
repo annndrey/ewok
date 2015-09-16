@@ -49,6 +49,9 @@ class QuestionAdmin(admin.ModelAdmin):
 
 @admin.register(TestResult)
 class TestResultAdmin(DeleteNotAllowedModelAdmin):
+    fieldsets = [
+        (None, {'fields': ['timestamp', 'student', 'test', 'result', 'answers']}),
+    ]
     readonly_fields = ('timestamp', 'student', 'test', 'answers', 'result')
     list_display = ('timestamp', 'student', 'test')
     list_filter = ('timestamp', 'student', 'test', 'student__group')

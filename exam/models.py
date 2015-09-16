@@ -134,7 +134,7 @@ class TestResult(models.Model):
     )
     student = models.ForeignKey(Student, verbose_name=u"студент", db_index=True)
     test = models.ForeignKey(Test, verbose_name=u"Тест", db_index=True)
-    answers = JSONField(verbose_name=u'результаты', default=[], indent=1)
+    answers = JSONField(verbose_name=u'ответы', default=[], indent=1)
     result = JSONField(verbose_name=u'результаты', indent=1)
 
     def __unicode__(self):
