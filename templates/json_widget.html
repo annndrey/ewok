@@ -1,0 +1,11 @@
+<input type="hidden" name="{{ name }}" value="{{ json }}">
+<table width="100%" border="1px">
+{% if value %}
+    {% for k, v in value.items %}
+    <tr {% cycle '' 'style="background: rgba(0,0,0,0.1)"' %}>
+        <td>{{ k }}</td>
+        <td>{{ v }}</td>
+    </tr>
+    {% endfor %}
+{% endif %}
+</table>

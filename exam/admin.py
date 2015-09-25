@@ -1,7 +1,9 @@
 # encoding: utf-8
 # Register your models here.
 from django.contrib import admin
+from jsonfield import JSONField
 from .models import Test, Question, Variant, TestResult
+from .forms import JSONWidget
 
 
 class DeleteNotAllowedModelAdmin(admin.ModelAdmin):
@@ -11,7 +13,7 @@ class DeleteNotAllowedModelAdmin(admin.ModelAdmin):
 
 class VariantsChouces(admin.StackedInline):
     model = Variant
-    extra = 1
+    extra = 0
 
 
 class QuestionChoices(admin.StackedInline):
@@ -52,9 +54,13 @@ class TestResultAdmin(DeleteNotAllowedModelAdmin):
     fieldsets = [
         (None, {'fields': ['timestamp', 'student', 'test', 'result', 'answers']}),
     ]
-    readonly_fields = ('timestamp', 'student', 'test', 'answers', 'result')
+    readonly_fields = ('timestamp', 'student', 'test')
     list_display = ('timestamp', 'student', 'test')
     list_filter = ('timestamp', 'student', 'test', 'student__group')
+
+    formfield_overrides = {
+        JSONField: {'widget': JSONWidget}
+    }
 
     def save_model(self, request, obj, form, change):
         obj.gen_result()

@@ -21,4 +21,4 @@ DATABASES = {
 
 INSTALLED_APPS = DEFAULT_APPS
 
-NODE_EXEC = 'node'
+NODE_EXEC = '/usr/local/bin/node'
