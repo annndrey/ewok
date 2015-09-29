@@ -29,7 +29,7 @@
                 </tr>
                 <tr>
                     <td><b>Пол</b></td>
-                    <td>{{ result.student.sex }}</td>
+                    <td>{% if result.student.sex %}Мужской{% else %}Женский"{% endif %}</td>
                 </tr>
                 <tr>
                     <td><b>Группа</b></td>
