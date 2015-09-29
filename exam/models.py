@@ -13,6 +13,8 @@ from redactor.fields import RedactorField
 TAG_RE = re.compile(r'<[^>]+>')
 
 default_func = '''function (answers) {
+    // global.student.sex
+    // global.student.age
     var result = [];
     answers.map(function (answer) {
         result.push(answer);
