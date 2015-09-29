@@ -43,7 +43,7 @@ def index(request):
         form = RegisterForm(request.POST)
         if not form.is_valid():
             messages.error(request, u"Форма заполнена не верно")
-            return render(request, 'register.html', dict(form=RegisterForm))
+            return render(request, 'exam/register.html', dict(form=RegisterForm))
 
         student_data = {
             'sex': form['sex'].data,
@@ -62,7 +62,7 @@ def index(request):
     elif request.method == 'GET':
         if current_student:
             return HttpResponseRedirect("/tests/")
-        return render(request, 'register.html', dict(form=RegisterForm))
+        return render(request, 'exam/register.html', dict(form=RegisterForm))
 
 
 @csrf_protect
@@ -74,7 +74,7 @@ def choose_test(request):
 
     tests = Test.objects.filter(disabled=False).order_by('priority')
 
-    return render(request, "test-choose.html", dict(
+    return render(request, "exam/test-choose.html", dict(
         student=request.student,
         tests=tests,
     ))
@@ -119,7 +119,7 @@ def start_test(request, test_id):
             if 'variant' not in request.POST:
                 messages.error(request, u"Выберите вариант ответа.")
 
-                return render(request, 'test-start.html', dict(
+                return render(request, 'exam/test-start.html', dict(
                     test=test,
                     question=question,
                     position=(request.session['current_test_question'] + 1),
@@ -157,7 +157,7 @@ def start_test(request, test_id):
 
         return HttpResponseRedirect("/tests/")
 
-    return render(request, 'test-start.html', dict(
+    return render(request, 'exam/test-start.html', dict(
         test=test,
         question=question,
         position=(position + 1),
@@ -174,7 +174,7 @@ def logout(request):
 @staff_member_required
 def results(request, result_id):
     try:
-        return render(request, 'test-results.html', dict(
+        return render(request, 'exam/test-results.html', dict(
             result=TestResult.objects.get(id=int(result_id))
         ))
     except:

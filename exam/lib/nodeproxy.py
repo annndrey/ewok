@@ -7,7 +7,7 @@ from django.conf import settings
 wrapper = u'''
 (function run(globals) {
     try {
-        var result = (%(func)s).apply(null, %(args)s);
+        var result = (%(func)s).apply(globals, %(args)s);
         if ((typeof result) == 'string') {
             result = JSON.stringify(result);
         }

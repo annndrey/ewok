@@ -43,7 +43,7 @@ class Test(models.Model):
         return u"{0.title}".format(self)
 
     def save(self, force_insert=False, force_update=False, using=None, update_fields=None):
-        execute(self.func, args=[[]])
+        execute(self.func, args=[[]], g={'student': {'age': 99, 'sex': True}})
         return super(Test, self).save()
 
 

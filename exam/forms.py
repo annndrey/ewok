@@ -9,5 +9,5 @@ class RegisterForm(forms.Form):
     name = forms.CharField(label=u'Имя', max_length=100, )
     middlename = forms.CharField(label=u'Отчество', max_length=100)
     group = forms.CharField(label=u'Группа', max_length=100)
-    age = forms.IntegerField(initial=10, label=u"Возраст", min_value=0, max_value=125)
+    age = forms.IntegerField(initial=16, label=u"Возраст", min_value=15, max_value=125)
     sex = forms.ChoiceField(choices=Student.GENDER.items(), label=u"Пол")
