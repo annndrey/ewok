@@ -4,6 +4,7 @@ from django.contrib import admin
 
 urlpatterns = patterns('',
     url(r'^$', 'exam.views.index', name='index'),
+    url(r'^results/view/(?P<result_id>\d+)$/?', 'exam.views.results', name='results'),
     url(r'^tests/$', 'exam.views.choose_test', name='choose-test'),
     url(r'^tests/(?P<test_id>\d+)/$', 'exam.views.start_test', name='start-test'),
     url(r'^logout$', 'exam.views.logout', name='logout'),

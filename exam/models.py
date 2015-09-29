@@ -68,8 +68,8 @@ class Question(models.Model):
         return u"{0}".format(remove_tags(self.description).strip(" "))
 
     def save(self, force_insert=False, force_update=False, using=None, update_fields=None):
-        if self.type == 2 and self.variant_set:
-            raise ValidationError(u"У ответа в свободной форме не может быть")
+        # if self.type == 2 and self.variant_set:
+        #     raise ValidationError(u"У ответа в свободной форме не может быть")
 
         return super(Question, self).save()
 

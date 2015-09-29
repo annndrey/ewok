@@ -1,0 +1,62 @@
+{% extends "base.html" %}
+
+{% load bootstrap3 %}
+
+{% block title %}Результат тестирования №{{ result.id }}{% endblock %}
+
+{% block content %}
+    <div class="row">
+        <div class="col-md-12" align="center">
+            <h2>Результат тестирования №{{ result.id }}</h2>
+            <p>Пройден {{ result.timestamp }}</p>
+        </div>
+    </div>
+    <div class="row">
+        <div class="col-md-12">
+            <h3 align="center">Тестируемый</h3>
+            <table class="table table-bordered table-striped">
+                <tr>
+                    <td><b>Фамилия</b></td>
+                    <td>{{ result.student.surname }}</td>
+                </tr>
+                <tr>
+                    <td><b>Имя</b></td>
+                    <td>{{ result.student.name }}</td>
+                </tr>
+                <tr>
+                    <td><b>Отчество</b></td>
+                    <td>{{ result.student.middlename }}</td>
+                </tr>
+                <tr>
+                    <td><b>Пол</b></td>
+                    <td>{{ result.student.sex }}</td>
+                </tr>
+                <tr>
+                    <td><b>Группа</b></td>
+                    <td>{{ result.student.group }}</td>
+                </tr>
+            </table>
+        </div>
+    </div>
+    <br/>
+    <div class="row">
+        <div class="col-md-12">
+            <div align="center">
+                <h4>Результаты тестирования</h4>
+                <h5>Тест №{{ result.test.id }}: {{ result.test.title }}</h5>
+            </div>
+            <table class="table table-bordered table-striped table-responsive">
+                <tr>
+                    <th>Показатель</th>
+                    <th>Значение</th>
+                </tr>
+                {% for key, value in result.result.items %}
+                    <tr>
+                        <td><b>{{ key }}</b></td>
+                        <td>{{ value }}</td>
+                    </tr>
+                {% endfor %}
+            </table>
+        </div>
+    </div>
+{% endblock %}

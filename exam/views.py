@@ -1,6 +1,7 @@
 # encoding: utf-8
 import uuid
 from functools import wraps
+from django.contrib.admin.views.decorators import staff_member_required
 from django.core.exceptions import ObjectDoesNotExist
 from django.shortcuts import render, HttpResponseRedirect, Http404
 from django.views.decorators.csrf import csrf_protect
@@ -168,3 +169,13 @@ def start_test(request, test_id):
 def logout(request):
     request.session.clear()
     return HttpResponseRedirect("/")
+
+
+@staff_member_required
+def results(request, result_id):
+    try:
+        return render(request, 'test-results.html', dict(
+            result=TestResult.objects.get(id=int(result_id))
+        ))
+    except:
+        raise Http404

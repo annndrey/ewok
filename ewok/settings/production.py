@@ -1,4 +1,5 @@
 # Fetch our common settings
+import os
 from common import *
 
 # #########################################################
@@ -42,4 +43,6 @@ CACHES = {
 }
 
 
-NODE_EXEC = '/usr/local/bin/node'
+NODE_EXEC = os.popen("which %s" % "nodejs").read().strip()
+if not NODE_EXEC:
+    NODE_EXEC = os.popen("which %s" % "node").read().strip()

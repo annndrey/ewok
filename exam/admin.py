@@ -1,9 +1,9 @@
 # encoding: utf-8
 # Register your models here.
 from django.contrib import admin
+from django import forms
 from jsonfield import JSONField
 from .models import Test, Question, Variant, TestResult
-from .forms import JSONWidget
 
 
 class DeleteNotAllowedModelAdmin(admin.ModelAdmin):
@@ -51,16 +51,18 @@ class QuestionAdmin(admin.ModelAdmin):
 
 @admin.register(TestResult)
 class TestResultAdmin(DeleteNotAllowedModelAdmin):
-    fieldsets = [
-        (None, {'fields': ['timestamp', 'student', 'test', 'result', 'answers']}),
-    ]
-    readonly_fields = ('timestamp', 'student', 'test')
+
+    def result_link(self, obj):
+        return '<a href="/results/view/{0.id}">Просмотр результатов</a>'.format(obj)
+
+    result_link.allow_tags = True
+    result_link.short_description = u'Результаты'
+
+    readonly_fields = ('timestamp', 'student', 'test', 'result_link')
+    exclude = ['answers', 'result']
+
     list_display = ('timestamp', 'student', 'test')
     list_filter = ('timestamp', 'student', 'test', 'student__group')
-
-    formfield_overrides = {
-        JSONField: {'widget': JSONWidget}
-    }
 
     def save_model(self, request, obj, form, change):
         obj.gen_result()
