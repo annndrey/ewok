@@ -146,7 +146,7 @@ def start_test(request, test_id):
     if len(questions) <= request.session['current_test_question']:
         cleanup(request)
         result.gen_result()
-        return render(request, "test-finished.html", dict(student=request.student))
+        return render(request, "exam/test-finished.html", dict(student=request.student))
 
     try:
         questions = request.session['current_test_questions']
