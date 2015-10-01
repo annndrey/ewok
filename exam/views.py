@@ -174,7 +174,8 @@ def results(request, result_id):
     try:
         result = TestResult.objects.get(id=int(result_id))
         return render(request, 'exam/test-results.html', dict(
-            result=result
+            result=result,
+            results=sorted(result.result.items())
         ))
     except:
         raise Http404
