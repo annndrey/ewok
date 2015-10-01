@@ -46,11 +46,11 @@ def index(request):
             return render(request, 'exam/register.html', dict(form=RegisterForm))
 
         student_data = {
-            'sex': form['sex'].data,
+            'sex': True if form['sex'].data == 'True' else False,
             'name': form.cleaned_data['name'],
             'surname': form.cleaned_data['surname'],
             'middlename': form.cleaned_data['middlename'],
-            'age': form.cleaned_data['age'],
+            'age': int(form.cleaned_data['age']),
             'group': form.cleaned_data['group']
         }
 
