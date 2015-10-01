@@ -172,8 +172,9 @@ def logout(request):
 @staff_member_required
 def results(request, result_id):
     try:
+        result = TestResult.objects.get(id=int(result_id))
         return render(request, 'exam/test-results.html', dict(
-            result=TestResult.objects.get(id=int(result_id))
+            result=result
         ))
     except:
         raise Http404

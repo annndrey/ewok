@@ -28,6 +28,7 @@ def remove_tags(text):
 
 
 class Test(models.Model):
+    name = models.CharField(max_length=255, verbose_name=u"Отображаемое имя")
     title = models.CharField(max_length=255, verbose_name=u"Название")
     func = models.TextField(blank=False, default=default_func)
     timeout = models.TimeField(verbose_name=u"Максимальное время выполнения", default=datetime.time(0,40,0))
