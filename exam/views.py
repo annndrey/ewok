@@ -126,17 +126,15 @@ def start_test(request, test_id):
                     questions_len=len(questions)
                 ))
 
-            answer = int(request.POST['variant'])
+            chosen_variant = Variant.objects.get(id=int(request.POST['variant'])).value
         elif question.type == 1:
-            answer = [int(i) for i in request.POST['variant']]
+            chosen_variant = [Variant.objects.get(id=int(i)).value for i in request.POST['variant']]
         elif question.type == 2:
-            answer = request.POST['text']
-
-        variant = Variant.objects.get(id=answer)
+            chosen_variant = request.POST['text']
 
         result.answers.append({
             'question': question.id,
-            'answer': variant.value,
+            'answer': chosen_variant,
         })
 
         result.save()

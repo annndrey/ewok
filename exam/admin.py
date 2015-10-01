@@ -3,7 +3,7 @@
 from django.contrib import admin
 from django import forms
 from jsonfield import JSONField
-from .models import Test, Question, Variant, TestResult
+from .models import Test, Question, Variant, TestResult, Student
 
 
 class DeleteNotAllowedModelAdmin(admin.ModelAdmin):
@@ -66,3 +66,11 @@ class TestResultAdmin(DeleteNotAllowedModelAdmin):
 
     def save_model(self, request, obj, form, change):
         obj.gen_result()
+
+
+@admin.register(Student)
+class StudentAdmin(DeleteNotAllowedModelAdmin):
+    readonly_fields = ('surname', 'name', 'middlename', 'group', 'age', 'sex')
+    list_display = ('surname', 'name', 'middlename', 'group', 'age', 'sex')
+    list_filter = ('surname', 'name', 'middlename', 'group', 'age', 'sex')
+
