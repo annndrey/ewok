@@ -106,6 +106,8 @@ class Student(models.Model):
         unique_together = (
             ('surname', 'middlename', 'name', 'group', 'age', 'sex'),
         )
+        verbose_name = u"Студент"
+        verbose_name_plural = u"Студенты"
 
     def save(self, force_insert=False, force_update=False, using=None,
              update_fields=None):
