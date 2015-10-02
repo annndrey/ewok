@@ -1,8 +1,6 @@
 # encoding: utf-8
 # Register your models here.
 from django.contrib import admin
-from django import forms
-from jsonfield import JSONField
 from .models import Test, Question, Variant, TestResult, Student
 
 

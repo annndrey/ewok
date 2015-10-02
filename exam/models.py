@@ -1,10 +1,7 @@
 # encoding: utf-8
 import datetime
-import json
-import random
 from exam.lib import nodeproxy
 import re
-from django.core.exceptions import ValidationError
 from jsonfield import JSONField
 from exam.lib.nodeproxy import execute
 from django.db import models
@@ -13,11 +10,11 @@ from redactor.fields import RedactorField
 TAG_RE = re.compile(r'<[^>]+>')
 
 default_func = '''function (answers) {
-    // global.student.sex
-    // global.student.age
-    var result = [];
-    answers.map(function (answer) {
-        result.push(answer);
+    // this.student.sex
+    // this.student.age
+    var result = {};
+    answers.map(function (answer, number) {
+        result[number+1] = answer.answer;
     });
     return result;
 }'''
