@@ -1,4 +1,5 @@
 # encoding: utf-8
+import logging
 import uuid
 from functools import wraps
 from django.contrib.admin.views.decorators import staff_member_required
@@ -9,6 +10,7 @@ from django.contrib import messages
 from .forms import RegisterForm
 from .models import Student, Test, Question, Variant, TestResult
 from .lib import nodeproxy
+import re
 
 
 def check_student(func):
@@ -169,13 +171,25 @@ def logout(request):
     return HttpResponseRedirect("/")
 
 
+def natural_key(item):
+    key, _ = item
+    r = [int(s) if s.isdigit() else s for s in re.split(r'(\d+)', key)]
+
+    l = len(key)
+    if l < 5:
+        r.insert(0, l)
+
+    return r
+
+
 @staff_member_required
 def results(request, result_id):
     try:
         result = TestResult.objects.get(id=int(result_id))
         return render(request, 'exam/test-results.html', dict(
             result=result,
-            results=sorted(result.result.items())
+            results=sorted(result.result.items(), key=natural_key)
         ))
-    except:
+    except Exception as e:
+        logging.exception(e)
         raise Http404
