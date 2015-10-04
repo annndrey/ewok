@@ -146,6 +146,7 @@ def start_test(request, test_id):
     if len(questions) <= request.session['current_test_question']:
         cleanup(request)
         result.gen_result()
+        request.session['uuid'] = str(uuid.uuid4())
         return render(request, "exam/test-finished.html", dict(student=request.student))
 
     try:
