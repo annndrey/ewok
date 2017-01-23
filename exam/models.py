@@ -23,7 +23,26 @@ default_func = '''function (answers) {
 def remove_tags(text):
     return TAG_RE.sub('', text)
 
+class StudentGroup(models.Model):
+    name = models.CharField(max_length=255, verbose_name=u"Название")
+    description = RedactorField(verbose_name=u"Описание", default='', blank=True)
 
+    def stcount(self):
+         return len(self.students.all())
+    stcount.short_description = u'Число студентов'
+
+    class Meta:
+        verbose_name = u"Группа"
+        verbose_name_plural = u"Группы"
+
+    def __unicode__(self):
+        # [{len(0.child_set.all())}]
+        return u"{0.name}".format(self)
+        
+    def save(self, force_insert=False, force_update=False, using=None, update_fields=None):
+        return super(StudentGroup, self).save()
+        
+    
 class Test(models.Model):
     name = models.CharField(max_length=255, verbose_name=u"Отображаемое имя")
     title = models.CharField(max_length=255, verbose_name=u"Название")
@@ -96,13 +115,14 @@ class Student(models.Model):
     surname = models.CharField(max_length=60, verbose_name=u"фамилия", db_index=True, null=False, blank=False)
     name = models.CharField(max_length=60, verbose_name=u"имя", db_index=True, null=False, blank=False)
     middlename = models.CharField(max_length=60, verbose_name=u"отчество", db_index=True, null=False, blank=False)
-    group = models.CharField(max_length=60, verbose_name=u"группа", db_index=True, null=False, blank=False)
+    # group = models.CharField(max_length=60, verbose_name=u"группа", db_index=True, null=True, blank=True)
     age = models.PositiveSmallIntegerField(verbose_name=u"возраст", db_index=True, null=False, blank=False)
     sex = models.BooleanField(choices=GENDER.items(), db_index=True, null=False, blank=False, verbose_name=u"Пол")
-
+    stgroup = models.ForeignKey("StudentGroup", verbose_name=u"группа", related_name='students')
+    
     class Meta:
         unique_together = (
-            ('surname', 'middlename', 'name', 'group', 'age', 'sex'),
+            ('surname', 'middlename', 'name', 'stgroup', 'age', 'sex'),
         )
         verbose_name = u"Студент"
         verbose_name_plural = u"Студенты"
@@ -116,7 +136,7 @@ class Student(models.Model):
         return super(Student, self).save()
 
     def __unicode__(self):
-        return u"{0.surname} {0.name} {0.middlename} [{0.group}]".format(self)
+        return u"{0.surname} {0.name} {0.middlename} [{0.stgroup}]".format(self)
 
 
 class TestResult(models.Model):

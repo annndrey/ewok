@@ -1,12 +1,15 @@
 # encoding: utf-8
 # Register your models here.
+
 from django.contrib import admin
-from .models import Test, Question, Variant, TestResult, Student
+from django.db.models import Count
+from .models import Test, Question, Variant, TestResult, Student, StudentGroup
 
 
 class DeleteNotAllowedModelAdmin(admin.ModelAdmin):
     def has_delete_permission(self, request, obj=None):
-        return False
+        return True
+        #return False
 
 
 class VariantsChouces(admin.StackedInline):
@@ -23,6 +26,11 @@ class QuestionChoices(admin.StackedInline):
     can_delete = False
     ordering = ('number',)
 
+
+@admin.register(StudentGroup)
+class StudentGroupAdmin(admin.ModelAdmin):
+    list_display = ('name', 'stcount')
+    list_filter = ('name',)
 
 @admin.register(Test)
 class TestAdmin(admin.ModelAdmin):
@@ -48,10 +56,13 @@ class QuestionAdmin(admin.ModelAdmin):
 
 
 @admin.register(TestResult)
-class TestResultAdmin(DeleteNotAllowedModelAdmin):
+class TestResultAdmin(admin.ModelAdmin):
 
     def result_link(self, obj):
         return '<a href="/results/view/{0.id}">Просмотр результатов</a>'.format(obj)
+
+    class Media:
+        js = ('custom.js',)
 
     result_link.allow_tags = True
     result_link.short_description = u'Результаты'
@@ -60,15 +71,19 @@ class TestResultAdmin(DeleteNotAllowedModelAdmin):
     exclude = ['answers', 'result']
 
     list_display = ('timestamp', 'student', 'test')
-    list_filter = ('timestamp', 'student', 'test', 'student__group')
-
+    list_filter = ('timestamp', 'student', 'test', 'student__name', 'student__stgroup')
+    search_fields = ('student__surname',)
+    
     def save_model(self, request, obj, form, change):
         obj.gen_result()
 
 
 @admin.register(Student)
-class StudentAdmin(DeleteNotAllowedModelAdmin):
-    readonly_fields = ('surname', 'name', 'middlename', 'group', 'age', 'sex')
-    list_display = ('surname', 'name', 'middlename', 'group', 'age', 'sex')
-    list_filter = ('surname', 'name', 'middlename', 'group', 'age', 'sex')
-
+class StudentAdmin(admin.ModelAdmin):
+    readonly_fields = ('surname', 'name', 'middlename', 'age', 'sex')
+    list_display = ('stgroup', 'surname', 'name', 'middlename', 'age', 'sex')
+    list_filter = ('stgroup', 'surname', 'name', 'middlename', 'age', 'sex')
+    search_fields = ('surname',)
+    class Media:
+        js = ('custom.js',)
+        

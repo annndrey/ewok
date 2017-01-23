@@ -10,11 +10,6 @@
 </head>
 <body>
   <script type="text/javascript">
-    (function ($) {
-    $(document).ready(function ($) {
-    document.getElementById("searchbar").setAttribute("placeholder", "Enter your number");
-    });
-    })(django.jQuery);
 </script>
 
 <div class="navbar navbar-inverse">

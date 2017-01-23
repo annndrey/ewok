@@ -8,7 +8,7 @@ from django.shortcuts import render, HttpResponseRedirect, Http404
 from django.views.decorators.csrf import csrf_protect
 from django.contrib import messages
 from .forms import RegisterForm
-from .models import Student, Test, Question, Variant, TestResult
+from .models import Student, Test, Question, Variant, TestResult, StudentGroup
 from .lib import nodeproxy
 import re
 
@@ -53,7 +53,7 @@ def index(request):
             'surname': form.cleaned_data['surname'],
             'middlename': form.cleaned_data['middlename'],
             'age': int(form.cleaned_data['age']),
-            'group': form.cleaned_data['group']
+            'stgroup': form.cleaned_data['stgroup'],
         }
 
         student, is_new = Student.objects.get_or_create(**student_data)
