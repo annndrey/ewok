@@ -102,7 +102,17 @@ def start_test(request, test_id):
         request.session['current_test_question'] = 0
         request.session['uuid'] = str(uuid.uuid4())
     elif current and int(current) != test_id:
-        return HttpResponseRedirect('/tests/%s/' % current)
+        cleanup(request)
+        test = Test.objects.get(disabled=False, id=test_id)
+        request.session['current_test'] = test.pk
+        questions = [q.id for q in test.question_set.all().order_by('number')]
+        request.session['current_test_questions'] = questions
+        request.session['current_test_question'] = 0
+        request.session['uuid'] = str(uuid.uuid4())
+        #before if there were a previously selected test
+        #user was redirected to its page. now we overwrite
+        #selected test data instead.
+        #return HttpResponseRedirect('/tests/%s/' % current)
     else:
         test = Test.objects.get(id=request.session['current_test'])
 
