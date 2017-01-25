@@ -152,7 +152,7 @@ class TestResult(models.Model):
         verbose_name=u"время прохождения теста",
         editable=False,
         db_index=True,
-        default=datetime.datetime.now()
+        default=datetime.datetime.now
     )
     student = models.ForeignKey(Student, verbose_name=u"студент", db_index=True)
     test = models.ForeignKey(Test, verbose_name=u"Тест", db_index=True)
