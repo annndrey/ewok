@@ -17,33 +17,44 @@
     })(django.jQuery);
 </script>
 
-<div class="navbar navbar-inverse">
-    <div class="navbar-header col-sm-4 hidden-xs">
+  <div class="navbar navbar-inverse">
+    <div class="container-fluid">
+      <div class="navbar-header col-sm-4 hidden-xs">
         <a class="navbar-brand" href="/">PSY-Point.ru</a>
-    </div>
-    {% if student %}
-    <div class="col-sm-8" align="right" style="display:block; margin: 7px 0;">
-        <div class="btn-group" role="group">
-          <button type="button" class="btn btn-default" disabled>
+      </div>
+      <div class="collapse navbar-collapse">
+	<ul class="nav navbar-nav navbar-right">
+	  <!-- hide if teacer is logged in-->
+	  {% if not teacher %} 
+	  <li><a href="#">Личный кабинет преподавателя</a></li>
+	  <li><a href="#">Получить доступ</a></li>
+	  {% endif %}
+	</ul>
+	{% if student %}
+	<div class="col-sm-8" align="right" style="display:block; margin: 7px 0;">
+          <div class="btn-group" role="group">
+            <button type="button" class="btn btn-default" disabled>
               {{ student.surname }}
               {{ student.name }}
               {{ student.middlename }}
               [{{ student.stgroup }}]
-          </button>
-          <a class="btn btn-primary" href="/logout">Выход с сайта</a>
-        </div>
+            </button>
+            <a class="btn btn-primary" href="/logout">Выход с сайта</a>
+          </div>
+	</div>
+	{% endif %}
+      </div>
     </div>
-{% endif %}
-</div>
+  </div>
 
-{% if messages %}{% for message in messages %}
+    {% if messages %}{% for message in messages %}
     <div class="alert{% if message.tags %} alert-{{ message.level_tag.lower }}{% endif %} col-md-push-1 col-md-10" role="alert">
-        <span class="glyphicon glyphicon-exclamation-sign" aria-hidden="true"></span>
-        <span class="sr-only">{{ message.level_tag.capitalize }}:</span>
-        {{ message }}
+      <span class="glyphicon glyphicon-exclamation-sign" aria-hidden="true"></span>
+      <span class="sr-only">{{ message.level_tag.capitalize }}:</span>
+      {{ message }}
     </div>
-{% endfor %}{% endif %}
-
-{% block content %}{% endblock %}
+    {% endfor %}{% endif %}
+    
+    {% block content %}{% endblock %}
 </body>
 </html>

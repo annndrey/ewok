@@ -13,6 +13,12 @@ from .lib import nodeproxy
 import re
 
 
+def cleanup(request):
+    for k in ('current_test_questions', 'current_test_question', 'current_test', 'uuid'):
+        if k in request.session:
+            request.session.pop(k)
+
+
 def check_student(func):
     @wraps(func)
     def wrap(request, *args, **kwargs):
@@ -33,9 +39,15 @@ def check_student(func):
 
     return wrap
 
+def index(request):
+    current_student = request.session.get('student', None)
+    if current_student:
+        return HttpResponseRedirect("/tests/")
+    
+    return render(request, 'exam/index.html')
 
 @csrf_protect
-def index(request):
+def starttest(request):
     current_student = request.session.get('student', None)
 
     if current_student:
@@ -70,22 +82,17 @@ def index(request):
 @csrf_protect
 @check_student
 def choose_test(request):
-    current = request.session.get('current_test', None)
-    if current:
-        return HttpResponseRedirect('/tests/%s/' % current)
-
+    # removed for the user could change his test
+    #current = request.session.get('current_test', None)
+    #if current:
+    #    return HttpResponseRedirect('/tests/%s/' % current)
+    cleanup(request)
     tests = Test.objects.filter(disabled=False).order_by('priority')
 
     return render(request, "exam/test-choose.html", dict(
         student=request.student,
         tests=tests,
     ))
-
-
-def cleanup(request):
-    for k in ('current_test_questions', 'current_test_question', 'current_test', 'uuid'):
-        if k in request.session:
-            request.session.pop(k)
 
 
 @csrf_protect

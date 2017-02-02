@@ -1,0 +1,16 @@
+{% extends "exam/base.html" %}
+
+{% load bootstrap3 %}
+
+{% block title %}Пройти тест{% endblock %}
+{% block content %}
+<div class="container">
+  <div class="col-md-6 col-md-offset-3">
+    <div class="jumbotron">
+      <h1>Пройти тест</h1>
+      <p>после нажатия на кнопку вы перейдете к выбору доступных тестов</p>
+      <p><a class="btn btn-primary btn-lg" href="/begintest" role="button">Выбрать тест</a></p>
+    </div>
+  </div>
+</div>
+{% endblock %}

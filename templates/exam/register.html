@@ -4,18 +4,20 @@
 
 {% block title %}Регистрация{% endblock %}
 {% block content %}
-    <div class="col-md-10 col-md-offset-1">
-        <div class="well col-md-12">
-          <form class="form-horizontal" method="post">
-            {% csrf_token %}
-            {% bootstrap_form form layout='horizontal' %}
-            <div class="form-group">
-              <div class="col-sm-offset-2 col-sm-10">
-                <button type="submit" class="btn btn-success">Перейти к тестированию</button>
-              </div>
-            </div>
-            {% csrf_token %}
-          </form>
+<div class="container">
+  <div class="col-md-10 col-md-offset-1">
+    <div class="well col-md-12">
+      <form class="form-horizontal" method="post">
+        {% csrf_token %}
+        {% bootstrap_form form layout='horizontal' %}
+        <div class="form-group">
+          <div class="col-sm-offset-2 col-sm-10">
+            <button type="submit" class="btn btn-success">Перейти к тестированию</button>
+          </div>
         </div>
+        {% csrf_token %}
+      </form>
     </div>
+  </div>
+</div>
 {% endblock %}
