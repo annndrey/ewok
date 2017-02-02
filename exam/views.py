@@ -47,7 +47,7 @@ def index(request):
     return render(request, 'exam/index.html')
 
 @csrf_protect
-def starttest(request):
+def register(request):
     current_student = request.session.get('student', None)
 
     if current_student:
