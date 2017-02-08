@@ -7,7 +7,7 @@ from django.core.exceptions import ObjectDoesNotExist
 from django.shortcuts import render, HttpResponseRedirect, Http404
 from django.views.decorators.csrf import csrf_protect
 from django.contrib import messages
-from .forms import RegisterForm
+from .forms import RegisterForm, SignupForm
 from .models import Student, Test, Question, Variant, TestResult, StudentGroup
 from .lib import nodeproxy
 import re
@@ -45,6 +45,40 @@ def index(request):
         return HttpResponseRedirect("/tests/")
     
     return render(request, 'exam/index.html')
+
+@csrf_protect
+def signup(request):
+    current_student = request.session.get('student', None)
+
+    if current_student:
+        return HttpResponseRedirect("/tests/")
+
+    if request.method == 'POST':
+        form = SignupForm(request.POST)
+        if not form.is_valid():
+            messages.error(request, u"Форма заполнена не верно")
+            return render(request, 'exam/tregister.html', dict(form=RegisterForm))
+
+        teacher_data = {
+            'fname': form.cleaned_data['fname'],
+            'lname': form.cleaned_data['lname'],
+            'middlename': form.cleaned_data['middlename'],
+            'login': form.cleaned_data['login'],
+            'password': form.cleaned_data['password'],
+            'email': form.cleaned_data['email']
+        }
+
+        student, is_new = Student.objects.get_or_create(**student_data)
+
+        request.session['student'] = student.pk
+
+        return HttpResponseRedirect("/tests/")
+
+    elif request.method == 'GET':
+        if current_student:
+            return HttpResponseRedirect("/tests/")
+        return render(request, 'exam/signup.html', dict(form=SignupForm))
+
 
 @csrf_protect
 def register(request):
