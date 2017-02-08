@@ -5,6 +5,7 @@ import re
 from jsonfield import JSONField
 from exam.lib.nodeproxy import execute
 from django.db import models
+from django.contrib.auth.models import User
 from redactor.fields import RedactorField
 
 TAG_RE = re.compile(r'<[^>]+>')
@@ -41,7 +42,15 @@ class StudentGroup(models.Model):
         
     def save(self, force_insert=False, force_update=False, using=None, update_fields=None):
         return super(StudentGroup, self).save()
-        
+
+class Teacher(models.Model):
+    user = models.OneToOneField(User, on_delete=models.CASCADE, verbose_name=u"учетная запись")
+    stgroup = models.ForeignKey("StudentGroup", verbose_name=u"группа", related_name='teacher')
+
+    class Meta:
+        verbose_name = u"Преподаватель"
+        verbose_name_plural = u"Преподаватели"
+
     
 class Test(models.Model):
     name = models.CharField(max_length=255, verbose_name=u"Отображаемое имя")
