@@ -1,14 +1,16 @@
 # encoding: utf-8
 import logging
 import uuid
+import hashlib
 from functools import wraps
 from django.contrib.admin.views.decorators import staff_member_required
 from django.core.exceptions import ObjectDoesNotExist
 from django.shortcuts import render, HttpResponseRedirect, Http404
 from django.views.decorators.csrf import csrf_protect
 from django.contrib import messages
+from django.contrib.auth.models import User, Group
 from .forms import RegisterForm, SignupForm
-from .models import Student, Test, Question, Variant, TestResult, StudentGroup
+from .models import Student, Test, Question, Variant, TestResult, StudentGroup, Teacher
 from .lib import nodeproxy
 import re
 
@@ -48,9 +50,9 @@ def index(request):
 
 @csrf_protect
 def signup(request):
-    current_student = request.session.get('student', None)
+    current_teacher = request.session.get('teacher', None)
 
-    if current_student:
+    if current_teacher:
         return HttpResponseRedirect("/tests/")
 
     if request.method == 'POST':
@@ -58,24 +60,27 @@ def signup(request):
         if not form.is_valid():
             messages.error(request, u"Форма заполнена не верно")
             return render(request, 'exam/tregister.html', dict(form=RegisterForm))
+        teacher_group = Group.objects.get(name='teachers')
 
-        teacher_data = {
-            'fname': form.cleaned_data['fname'],
-            'lname': form.cleaned_data['lname'],
-            'middlename': form.cleaned_data['middlename'],
-            'login': form.cleaned_data['login'],
-            'password': form.cleaned_data['password'],
-            'email': form.cleaned_data['email']
-        }
-
-        student, is_new = Student.objects.get_or_create(**student_data)
-
-        request.session['student'] = student.pk
+        authuser = User.objects.create_user(
+            username=form.cleaned_data['login'],
+            first_name= u"{0} {1}".format(form.cleaned_data['fname'], form.cleaned_data['middlename']),
+            last_name=form.cleaned_data['lname'],
+            password=form.cleaned_data['password'],
+            email=form.cleaned_data['email']
+        )
+        authuser.is_active = False
+        authuser.groups = [teacher_group,]
+        authuser.save()
+        teacher = Teacher(user=authuser, stgroup=None)
+        teacher.save()
+        #not ok
+        request.session['teacher'] = teacher.pk
 
         return HttpResponseRedirect("/tests/")
 
     elif request.method == 'GET':
-        if current_student:
+        if current_teacher:
             return HttpResponseRedirect("/tests/")
         return render(request, 'exam/signup.html', dict(form=SignupForm))
 
@@ -103,7 +108,7 @@ def register(request):
         }
 
         student, is_new = Student.objects.get_or_create(**student_data)
-
+        # not ok!
         request.session['student'] = student.pk
 
         return HttpResponseRedirect("/tests/")
@@ -116,12 +121,15 @@ def register(request):
 @csrf_protect
 @check_student
 def choose_test(request):
-    # removed for the user could change his test
-    #current = request.session.get('current_test', None)
-    #if current:
-    #    return HttpResponseRedirect('/tests/%s/' % current)
     cleanup(request)
-    tests = Test.objects.filter(disabled=False).order_by('priority')
+    #показывать только те тесты, которые отобраны преподавателем для группы.
+    # т.е. преопдаватель получает разные тесты.
+    # потом для каждой группы он может отображать разные тесты, но только те,
+    # которые ему доступны.
+    st_id = request.session.get('student', None)
+    stgrp_id = Student.objects.get(id=int(st_id)).stgroup.id
+    grouptests = Teacher.objects.get(stgroup=stgrp_id).tests
+    tests = grouptests.filter(disabled=False).order_by('priority')
 
     return render(request, "exam/test-choose.html", dict(
         student=request.student,

@@ -45,12 +45,18 @@ class StudentGroup(models.Model):
 
 class Teacher(models.Model):
     user = models.OneToOneField(User, on_delete=models.CASCADE, verbose_name=u"учетная запись")
-    stgroup = models.ForeignKey("StudentGroup", verbose_name=u"группа", related_name='teacher')
-
+    stgroup = models.ForeignKey("StudentGroup", verbose_name=u"группа", related_name='teacher', null=True)
+    tests = models.ManyToManyField("Test", verbose_name=u"тесты", related_name='teacher', null=True)
+    
     class Meta:
         verbose_name = u"Преподаватель"
         verbose_name_plural = u"Преподаватели"
 
+    def __unicode__(self):
+        return u"{0} {1}".format(self.user.first_name, self.user.last_name)
+
+    def save(self, force_insert=False, force_update=False, using=None, update_fields=None):
+        return super(Teacher, self).save()
     
 class Test(models.Model):
     name = models.CharField(max_length=255, verbose_name=u"Отображаемое имя")
