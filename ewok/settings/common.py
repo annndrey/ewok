@@ -124,7 +124,7 @@ STATIC_URL = '/static/'
 
 # The URL for media files
 MEDIA_URL = '/media/'
-
+LOGIN_REDIRECT_URL = '/myaccount/' 
 
 # ##### DEBUG CONFIGURATION ###############################
 DEBUG = False

@@ -6,7 +6,7 @@ from common import *
 
 # ##### DEBUG CONFIGURATION ###############################
 DEBUG = True
-
+LOGIN_REDIRECT_URL = '/myaccount/' 
 
 # ##### DATABASE CONFIGURATION ############################
 DATABASES = {

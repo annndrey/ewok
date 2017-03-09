@@ -2,6 +2,7 @@
 import logging
 import uuid
 import hashlib
+import re
 from functools import wraps
 from django.contrib.admin.views.decorators import staff_member_required
 from django.core.exceptions import ObjectDoesNotExist
@@ -9,10 +10,13 @@ from django.shortcuts import render, HttpResponseRedirect, Http404
 from django.views.decorators.csrf import csrf_protect
 from django.contrib import messages
 from django.contrib.auth.models import User, Group
-from .forms import RegisterForm, SignupForm
+from django.contrib.auth import authenticate
+from django.contrib.auth import logout
+from django.contrib.auth import login as auth_login
+from django.contrib.auth.decorators import login_required
+from .forms import RegisterForm, SignupForm, LoginForm, AcceptForm
 from .models import Student, Test, Question, Variant, TestResult, StudentGroup, Teacher
 from .lib import nodeproxy
-import re
 
 
 def cleanup(request):
@@ -20,6 +24,19 @@ def cleanup(request):
         if k in request.session:
             request.session.pop(k)
 
+def custom_login(request):
+    if request.method == 'POST':
+        username = request.POST['username']
+        password = request.POST['password']
+        user = authenticate(username=username, password=password)
+        if user is not None and user.is_active:
+            auth_login(request, user)
+            return HttpResponseRedirect("/myaccount")
+        return HttpResponseRedirect("/login")
+    if request.user.is_active:
+        return HttpResponseRedirect("/myaccount")
+    form = LoginForm()
+    return render(request, 'exam/login.html', {'form': LoginForm})
 
 def check_student(func):
     @wraps(func)
@@ -35,7 +52,7 @@ def check_student(func):
             try:
                 return func(request, *args, **kwargs)
             except ObjectDoesNotExist:
-                return logout(request)
+                return custom_logout(request)
         else:
             return HttpResponseRedirect("/")
 
@@ -49,16 +66,35 @@ def index(request):
     return render(request, 'exam/index.html')
 
 @csrf_protect
+def personal_data_acceptance(request):
+    accepted = request.session.get('accepted', None)
+    
+    if request.method == 'POST':
+        form = AcceptForm(request.POST)
+        if not form.is_valid():
+            messages.error(request, u"Форма заполнена неверно")
+            return render(request, 'exam/accept.html', dict(form=AcceptForm))
+
+        accepted=form.cleaned_data['accept'],
+        request.session['accepted']=1
+        return HttpResponseRedirect("/register")
+        
+    elif request.method == 'GET':
+        if accepted is not None and accepted==1:
+            return HttpResponseRedirect("/register")
+        return render(request, 'exam/accept.html', dict(form=AcceptForm))
+
+@csrf_protect
 def signup(request):
     current_teacher = request.session.get('teacher', None)
 
-    if current_teacher:
-        return HttpResponseRedirect("/tests/")
+    if request.user.is_authenticated:
+        return HttpResponseRedirect("/myaccount/")
 
     if request.method == 'POST':
         form = SignupForm(request.POST)
         if not form.is_valid():
-            messages.error(request, u"Форма заполнена не верно")
+            messages.error(request, u"Форма заполнена неверно")
             return render(request, 'exam/tregister.html', dict(form=RegisterForm))
         teacher_group = Group.objects.get(name='teachers')
 
@@ -77,25 +113,27 @@ def signup(request):
         #not ok
         request.session['teacher'] = teacher.pk
 
-        return HttpResponseRedirect("/tests/")
+        return HttpResponseRedirect("/myaccount/")
 
     elif request.method == 'GET':
         if current_teacher:
-            return HttpResponseRedirect("/tests/")
+            return HttpResponseRedirect("/myaccount/")
         return render(request, 'exam/signup.html', dict(form=SignupForm))
 
-
+@login_required(login_url='/login')
+def myaccount(request):
+    if request.user.is_authenticated:    
+        return render(request, 'exam/myaccount.html')
+    
 @csrf_protect
 def register(request):
     current_student = request.session.get('student', None)
-
-    if current_student:
-        return HttpResponseRedirect("/tests/")
+    accepted = request.session.get('accepted', None)
 
     if request.method == 'POST':
         form = RegisterForm(request.POST)
         if not form.is_valid():
-            messages.error(request, u"Форма заполнена не верно")
+            messages.error(request, u"Форма заполнена неверно")
             return render(request, 'exam/register.html', dict(form=RegisterForm))
 
         student_data = {
@@ -115,6 +153,8 @@ def register(request):
     elif request.method == 'GET':
         if current_student:
             return HttpResponseRedirect("/tests/")
+        if accepted is None or accepted==0:
+            return HttpResponseRedirect("/accept")
         return render(request, 'exam/register.html', dict(form=RegisterForm))
 
 
@@ -226,10 +266,15 @@ def start_test(request, test_id):
     ))
 
 
-def logout(request):
+#student logout
+def custom_logout(request):
     request.session.clear()
     return HttpResponseRedirect("/")
 
+def logout_view(request):
+    logout(request)
+    request.session.clear()
+    return HttpResponseRedirect("/")
 
 def natural_key(item):
     key, _ = item
