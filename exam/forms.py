@@ -17,7 +17,8 @@ class RegisterForm(forms.Form):
     def __init__(self, *args, **kwargs):
         super(RegisterForm, self).__init__(*args, **kwargs)
         self.fields['teacher'].queryset = Teacher.objects.filter(user__is_active=True)
-
+        self.fields['stgroup'].queryset = StudentGroup.objects.exclude(id=4)
+        
 class SignupForm(forms.Form):
     lname = forms.CharField(label=u'Фамилия', max_length=100)
     fname = forms.CharField(label=u'Имя', max_length=100, )
@@ -31,4 +32,4 @@ class LoginForm(forms.Form):
     password = forms.CharField(label=u'Пароль', max_length=100, widget=forms.PasswordInput)
 
 class AcceptForm(forms.Form):
-    accept = forms.BooleanField()
+    accept = forms.BooleanField(label=u'Да, разрешаю использовать мои персональные данные')

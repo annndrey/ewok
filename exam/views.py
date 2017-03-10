@@ -88,7 +88,7 @@ def personal_data_acceptance(request):
 def signup(request):
     current_teacher = request.session.get('teacher', None)
 
-    if request.user.is_authenticated:
+    if request.user.is_active:
         return HttpResponseRedirect("/myaccount/")
 
     if request.method == 'POST':
@@ -108,7 +108,7 @@ def signup(request):
         authuser.is_active = False
         authuser.groups = [teacher_group,]
         authuser.save()
-        teacher = Teacher(user=authuser, stgroup=None)
+        teacher = Teacher(user=authuser)
         teacher.save()
         #not ok
         request.session['teacher'] = teacher.pk
@@ -168,6 +168,7 @@ def choose_test(request):
     # которые ему доступны.
     st_id = request.session.get('student', None)
     stgrp_id = Student.objects.get(id=int(st_id)).stgroup.id
+    ##
     grouptests = Teacher.objects.get(stgroup=stgrp_id).tests
     tests = grouptests.filter(disabled=False).order_by('priority')
 

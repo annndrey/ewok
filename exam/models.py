@@ -45,8 +45,8 @@ class StudentGroup(models.Model):
 
 class Teacher(models.Model):
     user = models.OneToOneField(User, on_delete=models.CASCADE, verbose_name=u"учетная запись")
-    stgroup = models.OneToOneField("StudentGroup", on_delete=models.CASCADE, primary_key=True, verbose_name=u"группа", related_name='teacher', null=True)
-    tests = models.ManyToManyField("Test", verbose_name=u"тесты", related_name='teacher', null=True)
+    stgroup = models.OneToOneField("StudentGroup", on_delete=models.CASCADE, primary_key=True, verbose_name=u"группа", related_name='teacher', default=4)
+    tests = models.ManyToManyField("Test", verbose_name=u"тесты", related_name='teacher', blank=True)
     
     class Meta:
         verbose_name = u"Преподаватель"
