@@ -1,13 +1,14 @@
 # encoding: utf-8
 import logging
 import uuid
+import simplejson
 import hashlib
 import re
 from functools import wraps
 from django.contrib.admin.views.decorators import staff_member_required
 from django.core.exceptions import ObjectDoesNotExist
-from django.shortcuts import render, HttpResponseRedirect, Http404
-from django.views.decorators.csrf import csrf_protect
+from django.shortcuts import render, HttpResponseRedirect, Http404, HttpResponse
+from django.views.decorators.csrf import csrf_protect, csrf_exempt
 from django.contrib import messages
 from django.contrib.auth.models import User, Group
 from django.contrib.auth import authenticate
@@ -18,6 +19,33 @@ from .forms import RegisterForm, SignupForm, LoginForm, AcceptForm
 from .models import Student, Test, Question, Variant, TestResult, StudentGroup, Teacher
 from .lib import nodeproxy
 
+@csrf_exempt
+def get_groups(request):
+    response = []
+    tid = int(request.POST['id_teacher'])
+    data = []
+    if tid:
+        group = StudentGroup.objects.get(teacher__user=tid)
+        group_name = group.name
+        data.append({'id':group.id, 'name':group.name})
+        response = { 'item_list':data }
+        return HttpResponse(simplejson.dumps(response))
+    response = {}
+    return HttpResponse(simplejson.dumps(response))
+
+@csrf_exempt
+def get_teachers(request):
+    response = []
+    gid = int(request.POST['id_stgroup'])
+    data = []
+    if gid:
+        teacher = Teacher.objects.get(stgroup=gid)
+        teacher_name = u"%s" % teacher
+        data.append({'id':teacher.user.id, 'name':teacher_name})
+        response = { 'item_list':data }
+        return HttpResponse(simplejson.dumps(response))
+    response = {}
+    return HttpResponse(simplejson.dumps(response))
 
 def cleanup(request):
     for k in ('current_test_questions', 'current_test_question', 'current_test', 'uuid'):
@@ -37,6 +65,7 @@ def custom_login(request):
         return HttpResponseRedirect("/myaccount")
     form = LoginForm()
     return render(request, 'exam/login.html', {'form': LoginForm})
+
 
 def check_student(func):
     @wraps(func)
@@ -75,13 +104,20 @@ def personal_data_acceptance(request):
             messages.error(request, u"Форма заполнена неверно")
             return render(request, 'exam/accept.html', dict(form=AcceptForm))
 
-        accepted=form.cleaned_data['accept'],
-        request.session['accepted']=1
-        return HttpResponseRedirect("/register")
+        accepted = form.cleaned_data['accept']
+        if accepted == False:
+            #delete respective student
+            Student.objects.filter(pk=int(request.session['student'])).delete()
+            del request.session['student']
+            messages.error(request, u"Для дальнейшей работы с сайтом необходимо ваше согласие на обработку и хранение персональных данных")
+            return HttpResponseRedirect("/register")
+        else:
+            request.session['accepted']=1
+            return HttpResponseRedirect("/tests/")
         
     elif request.method == 'GET':
         if accepted is not None and accepted==1:
-            return HttpResponseRedirect("/register")
+            return HttpResponseRedirect("/tests/")
         return render(request, 'exam/accept.html', dict(form=AcceptForm))
 
 @csrf_protect
@@ -94,7 +130,7 @@ def signup(request):
     if request.method == 'POST':
         form = SignupForm(request.POST)
         if not form.is_valid():
-            messages.error(request, u"Форма заполнена неверно")
+            messages.error(request, u"Форма заполнена неверно, %s" % [f.errors.as_text for f in form.fields])
             return render(request, 'exam/tregister.html', dict(form=RegisterForm))
         teacher_group = Group.objects.get(name='teachers')
 
@@ -122,6 +158,8 @@ def signup(request):
 
 @login_required(login_url='/login')
 def myaccount(request):
+    if request.user.is_staff or request.user.is_root:
+        return HttpResponseRedirect('/admin')
     if request.user.is_authenticated:    
         return render(request, 'exam/myaccount.html')
     
@@ -129,12 +167,31 @@ def myaccount(request):
 def register(request):
     current_student = request.session.get('student', None)
     accepted = request.session.get('accepted', None)
-
+    current_form = request.session.get('regform_data', None)
+    
     if request.method == 'POST':
+
         form = RegisterForm(request.POST)
         if not form.is_valid():
-            messages.error(request, u"Форма заполнена неверно")
-            return render(request, 'exam/register.html', dict(form=RegisterForm))
+            messages.error(request, u"Форма заполнена неверно, %s" % form.errors)
+            regform_data = {
+                'sex': True if form['sex'].data == 'True' else False,
+                'name': form.cleaned_data['name'],
+                'surname': form.cleaned_data['surname'],
+                'middlename': form.cleaned_data['middlename'],
+                'age': int(form.cleaned_data['age']),
+                'stgroup': form.cleaned_data['stgroup'].id,
+                'teacher': u"%s" % form.cleaned_data['teacher'].user.id,
+            }
+            request.session['regform_data'] = regform_data
+            if current_form is not None:
+                current_form['stgroup'] = StudentGroup.objects.get(pk=int(current_form['stgroup']))
+                current_form['teacher'] = Teacher.objects.get(user__pk=int(current_form['teacher']))
+                regform = RegisterForm(initial=current_form)
+                return render(request, 'exam/register.html', dict(form=regform))
+            else:
+                return render(request, 'exam/register.html', dict(form=RegisterForm))
+            
 
         student_data = {
             'sex': True if form['sex'].data == 'True' else False,
@@ -144,18 +201,37 @@ def register(request):
             'age': int(form.cleaned_data['age']),
             'stgroup': form.cleaned_data['stgroup'],
         }
+        regform_data = {
+            'sex': True if form['sex'].data == 'True' else False,
+            'name': form.cleaned_data['name'],
+            'surname': form.cleaned_data['surname'],
+            'middlename': form.cleaned_data['middlename'],
+            'age': int(form.cleaned_data['age']),
+            'stgroup': form.cleaned_data['stgroup'].id,
+            'teacher': form.cleaned_data['teacher'].user.id,
+        }
 
         student, is_new = Student.objects.get_or_create(**student_data)
         # not ok!
         request.session['student'] = student.pk
+        if accepted is None or accepted==False:
+            request.session['regform_data'] = regform_data
+            return HttpResponseRedirect("/accept")
 
+        if current_form is not None:
+            del request.session['regform_data']
         return HttpResponseRedirect("/tests/")
+    
     elif request.method == 'GET':
         if current_student:
             return HttpResponseRedirect("/tests/")
-        if accepted is None or accepted==0:
-            return HttpResponseRedirect("/accept")
-        return render(request, 'exam/register.html', dict(form=RegisterForm))
+        if current_form is not None:
+            current_form['stgroup'] = StudentGroup.objects.get(pk=int(current_form['stgroup']))
+            current_form['teacher'] = Teacher.objects.get(user__pk=int(current_form['teacher']))
+            regform = RegisterForm(initial=current_form)
+            return render(request, 'exam/register.html', dict(form=regform))
+        else:
+            return render(request, 'exam/register.html', dict(form=RegisterForm))
 
 
 @csrf_protect

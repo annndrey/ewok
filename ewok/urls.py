@@ -22,6 +22,9 @@ urlpatterns = patterns('',
                        url(r'^logout$', 'exam.views.logout_view', name='logout'),
                        url(r'^admin/', include(admin.site.urls)),
                        url(r'^redactor/', include('redactor.urls')),
+                       # for register form ajax queries
+                       url(r'^a/get/teacher/?$', 'exam.views.get_teachers', name='get_teachers'),
+                       url(r'^a/get/group/?$', 'exam.views.get_groups', name='get_groups'),
 )
 
 if settings.DEBUG:
