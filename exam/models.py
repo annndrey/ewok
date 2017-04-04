@@ -117,6 +117,7 @@ class Variant(models.Model):
     class Meta:
         verbose_name = u"Вариант ответа"
         verbose_name_plural = u"Варианты ответов"
+        ordering = ['id']
 
     def __unicode__(self):
         return u"[{1}...] {0.text}".format(self, remove_tags(self.question.description).strip('. ')[:20])
