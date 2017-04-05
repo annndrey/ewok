@@ -2,9 +2,12 @@
 # -*- coding: utf-8 -*-
 
 import sys
+import os
 import json
 import datetime
 import django
+sys.path.append('/srv/ewok/ewok/settings')
+os.environ['DJANGO_SETTINGS_MODULE'] = 'production'
 
 testtitle=u'%s' % sys.argv[1].decode('utf-8')
 testdata=open(sys.argv[2]).read()
@@ -25,7 +28,7 @@ test, is_new = Test.objects.get_or_create(name=testtitle, title=testtitle, descr
 for idx, item in enumerate(questions):
     text, variants = item
     print text, variants
-    q, is_new = Question.objects.get_or_create(test=test, description=text, number=(idx+1), type=0)
+    q, is_new = Question.objects.get_or_create(test=test, description=text, number=(idx+1), type=3)
 
     for value, variant in enumerate(variants):
-        Variant.objects.get_or_create(question=q, text=variant, value={value+1: value+1})
+        Variant.objects.get_or_create(question=q, text=variant, value={value: value})

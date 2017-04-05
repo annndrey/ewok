@@ -293,7 +293,7 @@ def start_test(request, test_id):
     if request.method == 'POST':
         question = Question.objects.get(id=questions[request.session['current_test_question']])
 
-        if question.type == 0:
+        if question.type == 0 or question.type == 3:
             if 'variant' not in request.POST:
                 messages.error(request, u"Выберите вариант ответа.")
 
