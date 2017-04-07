@@ -12,7 +12,7 @@ class RegisterForm(forms.Form):
     name = forms.CharField(label=u'Имя', max_length=100, )
     middlename = forms.CharField(label=u'Отчество', max_length=100)
     teacher = forms.ModelChoiceField(queryset=User.objects, to_field_name='user', label=u'Преподаватель')
-    stgroup = forms.ModelChoiceField(queryset=StudentGroup.objects, label=u'Группа')
+    stgroup = forms.ModelChoiceField(queryset=StudentGroup.objects, label=u'Группа', widget=forms.Select(attrs={'disabled':'disabled'}))
     age = forms.IntegerField(initial=16, label=u"Возраст", min_value=15, max_value=125)
     sex = forms.ChoiceField(choices=Student.GENDER.items(), label=u"Пол")
     
@@ -36,3 +36,23 @@ class LoginForm(forms.Form):
 class AcceptForm(forms.Form):
     accept = forms.BooleanField(label=u'Да, разрешаю использовать мои персональные данные', required=False, initial=False)
     dummy = forms.CharField(initial='dummy', widget=forms.widgets.HiddenInput())
+
+class TeacherForm(forms.ModelForm):
+    class Meta:
+        model = Teacher
+        fields = ['user', 'tests']
+
+    stgroup = forms.ModelMultipleChoiceField(queryset=StudentGroup.objects.all(), label='Группы')
+
+    def __init__(self, *args, **kwargs):
+        super(TeacherForm, self).__init__(*args, **kwargs)
+
+        if self.instance:
+            self.fields['stgroup'].initial = self.instance.stgroup.all()
+            
+    def save(self, *args, **kwargs):
+        instance = super(TeacherForm, self).save(commit=False)
+        self.fields['stgroup'].initial.update(teacher=None)
+        self.cleaned_data['stgroup'].update(teacher=instance)
+        return instance
+    

@@ -22,12 +22,13 @@ from .lib import nodeproxy
 @csrf_exempt
 def get_groups(request):
     response = []
-    tid = int(request.POST['id_teacher'])
+    tid = int(request.POST.get('id_teacher'))
     data = []
     if tid:
-        group = StudentGroup.objects.get(teacher__user=tid)
-        group_name = group.name
-        data.append({'id':group.id, 'name':group.name})
+        groups = StudentGroup.objects.filter(teacher__user__in=[tid,])
+        for group in groups:
+            group_name = group.name
+            data.append({'id':group.id, 'name':group.name})
         response = { 'item_list':data }
         return HttpResponse(simplejson.dumps(response))
     response = {}
@@ -39,7 +40,7 @@ def get_teachers(request):
     gid = int(request.POST['id_stgroup'])
     data = []
     if gid:
-        teacher = Teacher.objects.get(stgroup=gid)
+        teacher = Teacher.objects.filter(stgroup__in=gid).first()
         teacher_name = u"%s" % teacher
         data.append({'id':teacher.user.id, 'name':teacher_name})
         response = { 'item_list':data }
@@ -180,7 +181,7 @@ def register(request):
                 'surname': form.cleaned_data['surname'],
                 'middlename': form.cleaned_data['middlename'],
                 'age': int(form.cleaned_data['age']),
-                'stgroup': form.cleaned_data['stgroup'].id,
+                'stgroup': int(form.cleaned_data['stgroup']),
                 'teacher': u"%s" % form.cleaned_data['teacher'].user.id,
             }
             request.session['regform_data'] = regform_data

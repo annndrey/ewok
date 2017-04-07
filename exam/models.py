@@ -24,10 +24,13 @@ default_func = '''function (answers) {
 def remove_tags(text):
     return TAG_RE.sub('', text)
 
+
 class StudentGroup(models.Model):
     name = models.CharField(max_length=255, verbose_name=u"Название")
     description = RedactorField(verbose_name=u"Описание", default='', blank=True)
-
+    #teacher = models.ForeignKey("Teacher", verbose_name='Преподаватель', default=1, blank=True, null=True, related_name='+')
+    teacher = models.ForeignKey("Teacher", verbose_name='Преподаватель', default=1, blank=True, null=True, related_name='stgroup')
+    
     def stcount(self):
          return len(self.students.all())
     stcount.short_description = u'Число студентов'
@@ -35,20 +38,18 @@ class StudentGroup(models.Model):
     class Meta:
         verbose_name = u"Группа"
         verbose_name_plural = u"Группы"
-
+        
     def __unicode__(self):
-        # [{len(0.child_set.all())}]
         return u"{0.name}".format(self)
         
     def save(self, force_insert=False, force_update=False, using=None, update_fields=None):
         return super(StudentGroup, self).save()
 
 class Teacher(models.Model):
-    #id = models.AutoField(primary_key=True)
+    id = models.AutoField(primary_key=True, default=1)
     user = models.OneToOneField(User, on_delete=models.CASCADE, verbose_name=u"учетная запись")
-    stgroup = models.OneToOneField("StudentGroup", on_delete=models.CASCADE, primary_key=True, verbose_name=u"группа", related_name='teacher', default=4)
     tests = models.ManyToManyField("Test", verbose_name=u"тесты", related_name='teacher', blank=True)
-    
+
     class Meta:
         verbose_name = u"Преподаватель"
         verbose_name_plural = u"Преподаватели"
