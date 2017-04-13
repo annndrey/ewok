@@ -38,21 +38,37 @@ class AcceptForm(forms.Form):
     dummy = forms.CharField(initial='dummy', widget=forms.widgets.HiddenInput())
 
 class TeacherForm(forms.ModelForm):
+    stgroup = forms.ModelMultipleChoiceField(queryset=StudentGroup.objects.all(), label='Группы', required=False)
+
     class Meta:
         model = Teacher
-        fields = ['user', 'tests']
-
-    stgroup = forms.ModelMultipleChoiceField(queryset=StudentGroup.objects.all(), label='Группы')
+        fields = ['user', 'tests', 'stgroup']
 
     def __init__(self, *args, **kwargs):
         super(TeacherForm, self).__init__(*args, **kwargs)
 
-        if self.instance:
-            self.fields['stgroup'].initial = self.instance.stgroup.all()
+        if self.instance.pk is not None:
+            self.initial['stgroup'] = [values[0] for values in self.instance.stgroup.values_list('pk')]
+
+    #def save(self, commit=True):
+    #    instance = super(TeacherForm, self).save(commit)
+    #    def save_m2m():
+    #        instance.stgroup = self.cleaned_data['stgroup']
+
+    #    if commit:
+    #        save_m2m()
+    #    elif hasattr(self, 'save_m2m'):
+    #        save_old_m2m = self.save_m2m
+
+    #        def save_both():
+    #            save_old_m2m()
+    #            save_m2m()
+
+    #        self.save_m2m = save_both
+    #    else:
+    #        self.save_m2m = save_m2
+
+    #    return instance
+
+    #save.alters_data = True
             
-    def save(self, *args, **kwargs):
-        instance = super(TeacherForm, self).save(commit=False)
-        self.fields['stgroup'].initial.update(teacher=None)
-        self.cleaned_data['stgroup'].update(teacher=instance)
-        return instance
-    

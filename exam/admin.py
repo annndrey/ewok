@@ -33,6 +33,10 @@ class TeacherAdmin(admin.ModelAdmin):
     list_display = ['user', 'get_all_groups']#'get_all_groups']
     list_filter = ['user', ]#'get_all_groups']
     search_fields = ['user__username', 'user__first_name', 'user__last_name']
+
+    #def get_queryset(self, request):
+    #    qs = super(TeacherAdmin, self).get_queryset(request)
+    #    return qs.filter(stgroup__teacher__count__gt=0)
     
     def get_all_groups(self, obj):
         return "; ".join([g.name for g in obj.stgroup.all()])
@@ -43,13 +47,10 @@ class TeacherAdmin(admin.ModelAdmin):
         return obj.stgroup.name
     def get_fname(self, obj):
         return obj.user.first_name
-    
     def get_lname(self, obj):
         return obj.user.last_name
-    
-    #def get_stgroupname(self, obj):
-    #    return obj.stgroup.name
 
+    
 @admin.register(StudentGroup)
 class StudentGroupAdmin(admin.ModelAdmin):
     list_display = ('name', 'stcount')

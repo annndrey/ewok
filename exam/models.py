@@ -29,27 +29,33 @@ class StudentGroup(models.Model):
     name = models.CharField(max_length=255, verbose_name=u"Название")
     description = RedactorField(verbose_name=u"Описание", default='', blank=True)
     #teacher = models.ForeignKey("Teacher", verbose_name='Преподаватель', default=1, blank=True, null=True, related_name='+')
-    teacher = models.ForeignKey("Teacher", verbose_name='Преподаватель', default=1, blank=True, null=True, related_name='stgroup')
     
+    def tcount(self):
+        if len(self.teacher.all()) > 0:
+            return "---"
+        return ""
+
     def stcount(self):
-         return len(self.students.all())
+        return len(self.students.all())
+
     stcount.short_description = u'Число студентов'
 
     class Meta:
         verbose_name = u"Группа"
         verbose_name_plural = u"Группы"
-        
+
     def __unicode__(self):
-        return u"{0.name}".format(self)
+        return u"{1}  {0.name}".format(self, self.tcount())
         
     def save(self, force_insert=False, force_update=False, using=None, update_fields=None):
         return super(StudentGroup, self).save()
 
 class Teacher(models.Model):
-    id = models.AutoField(primary_key=True, default=1)
+    #id = models.AutoField(primary_key=True, default=1)
     user = models.OneToOneField(User, on_delete=models.CASCADE, verbose_name=u"учетная запись")
     tests = models.ManyToManyField("Test", verbose_name=u"тесты", related_name='teacher', blank=True)
-
+    stgroup = models.ManyToManyField("StudentGroup", verbose_name='Группы',  blank=True, null=True, related_name='teacher')
+    
     class Meta:
         verbose_name = u"Преподаватель"
         verbose_name_plural = u"Преподаватели"
@@ -57,8 +63,11 @@ class Teacher(models.Model):
     def __unicode__(self):
         return u"{0} {1}".format(self.user.first_name, self.user.last_name)
 
-    def save(self, force_insert=False, force_update=False, using=None, update_fields=None):
-        return super(Teacher, self).save()
+    #def save(self, *args, **kwargs):
+    #    #if not self.pk:
+    #    obj = Teacher()#super(Teacher, self)#.save(*args, **kwargs)
+    #    return obj
+    #    #obj.user=
     
 class Test(models.Model):
     name = models.CharField(max_length=255, verbose_name=u"Отображаемое имя")

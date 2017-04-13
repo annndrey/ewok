@@ -21,33 +21,33 @@
   </div>
 </div>
 <script type="text/javascript">
-function get_group(){
-		  jQuery.ajax({
-		  async: false,
-		  type: "POST",
-		  url: "/a/get/group/",
-		  data: "id_teacher=" + jQuery('#id_teacher').val(),
-		  success: function(response) {
-		  result = JSON.parse(response);
-		  if (result) {
-		  jQuery('#id_stgroup').empty()
-		  for(var i=0;i < result.item_list.length;i++){
-				  jQuery('#id_stgroup').append(jQuery('<option>', {
-				  value: result.item_list[i]['id'],
-				  text: result.item_list[i]['name'],
-				  selected: 'selected',
-				  }));
-				  }
-
-				  } else {
-				  console.log('error');
-				  }
-				  }
-				  });
-				          }
-				  jQuery("#id_teacher").change(function(){
-				  get_group();
-				  jQuery("#id_stgroup").prop('disabled', false);
-				  });
-				  </script>
+  function get_group(){
+  jQuery.ajax({
+  async: false,
+  type: "POST",
+  url: "/a/get/group/",
+  data: "id_teacher=" + jQuery('#id_teacher').val(),
+  success: function(response) {
+  result = JSON.parse(response);
+  if (result) {
+  jQuery('#id_stgroup').empty()
+  for(var i=0;i < result.item_list.length;i++){
+		  jQuery('#id_stgroup').append(jQuery('<option>', {
+		  value: result.item_list[i]['id'],
+		  text: result.item_list[i]['name'],
+		  }));
+		  }
+		  
+		  } else {
+		  console.log('error');
+		  }
+		  }
+		  });
+		  }
+		  jQuery("#id_teacher").change(function(){
+		  get_group();
+		  jQuery("#id_stgroup").prop('disabled', false);
+		  jQuery("#id_stgroup").prop('selectedIndex', 0);
+		  });
+		  </script>
 {% endblock %}

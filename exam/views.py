@@ -68,6 +68,20 @@ def custom_login(request):
     return render(request, 'exam/login.html', {'form': LoginForm})
 
 
+def accept_required(func):
+    @wraps(func)
+    def wrap(request, *args, **kwargs):
+        accepted = request.session.get('accepted', None)
+        if accepted:
+            try:
+                return func(request, *args, **kwargs)
+            except ObjectDoesNotExist:
+                return custom_logout(request)
+        else:
+            return HttpResponseRedirect("/accept")
+    return wrap
+
+
 def check_student(func):
     @wraps(func)
     def wrap(request, *args, **kwargs):
@@ -76,7 +90,6 @@ def check_student(func):
             student = Student.objects.get(id=int(student))
         except:
             student = None
-
         if student:
             request.student = student
             try:
@@ -84,8 +97,7 @@ def check_student(func):
             except ObjectDoesNotExist:
                 return custom_logout(request)
         else:
-            return HttpResponseRedirect("/")
-
+            return HttpResponseRedirect("/register")
     return wrap
 
 def index(request):
@@ -98,7 +110,6 @@ def index(request):
 @csrf_protect
 def personal_data_acceptance(request):
     accepted = request.session.get('accepted', None)
-    
     if request.method == 'POST':
         form = AcceptForm(request.POST)
         if not form.is_valid():
@@ -107,22 +118,23 @@ def personal_data_acceptance(request):
 
         accepted = form.cleaned_data['accept']
         if accepted == False:
-            #delete respective student
-            Student.objects.filter(pk=int(request.session['student'])).delete()
-            del request.session['student']
             messages.error(request, u"Для дальнейшей работы с сайтом необходимо ваше согласие на обработку и хранение персональных данных")
-            return HttpResponseRedirect("/register")
+            return HttpResponseRedirect("/accept")
         else:
-            request.session['accepted']=1
+            request.session['accepted']='accepted'
             return HttpResponseRedirect("/tests/")
         
     elif request.method == 'GET':
-        if accepted is not None and accepted==1:
+        if accepted is not None and accepted=='accepted':
             return HttpResponseRedirect("/tests/")
+        
         return render(request, 'exam/accept.html', dict(form=AcceptForm))
 
 @csrf_protect
 def signup(request):
+    """
+    регистрация для преподавателей
+    """
     current_teacher = request.session.get('teacher', None)
 
     if request.user.is_active:
@@ -165,13 +177,15 @@ def myaccount(request):
         return render(request, 'exam/myaccount.html')
     
 @csrf_protect
+@accept_required
 def register(request):
+    """
+    регистрация для студентов
+    """
     current_student = request.session.get('student', None)
-    accepted = request.session.get('accepted', None)
     current_form = request.session.get('regform_data', None)
     
     if request.method == 'POST':
-
         form = RegisterForm(request.POST)
         if not form.is_valid():
             messages.error(request, u"Форма заполнена неверно, %s" % form.errors)
@@ -181,11 +195,13 @@ def register(request):
                 'surname': form.cleaned_data['surname'],
                 'middlename': form.cleaned_data['middlename'],
                 'age': int(form.cleaned_data['age']),
-                'stgroup': int(form.cleaned_data['stgroup']),
+                'stgroup': form.cleaned_data['stgroup'].id,
                 'teacher': u"%s" % form.cleaned_data['teacher'].user.id,
             }
             request.session['regform_data'] = regform_data
             if current_form is not None:
+                # ИСПРАВИТЬ, чтобы не показывало --- перед именем
+                # и чтобы stgroup был выбран и передавался при повтоорной отправке
                 current_form['stgroup'] = StudentGroup.objects.get(pk=int(current_form['stgroup']))
                 current_form['teacher'] = Teacher.objects.get(user__pk=int(current_form['teacher']))
                 regform = RegisterForm(initial=current_form)
@@ -213,11 +229,7 @@ def register(request):
         }
 
         student, is_new = Student.objects.get_or_create(**student_data)
-        # not ok!
         request.session['student'] = student.pk
-        if accepted is None or accepted==False:
-            request.session['regform_data'] = regform_data
-            return HttpResponseRedirect("/accept")
 
         if current_form is not None:
             del request.session['regform_data']
@@ -233,7 +245,6 @@ def register(request):
             return render(request, 'exam/register.html', dict(form=regform))
         else:
             return render(request, 'exam/register.html', dict(form=RegisterForm))
-
 
 @csrf_protect
 @check_student
@@ -257,6 +268,7 @@ def choose_test(request):
 
 @csrf_protect
 @check_student
+@accept_required
 def start_test(request, test_id):
     test_id = int(test_id)
     current = request.session.get('current_test', None)
