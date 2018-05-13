@@ -10,7 +10,7 @@ from sqlalchemy import create_engine, func
 from sqlalchemy.orm import sessionmaker
 
 from django import forms
-from django.http import HttpResponse
+from django.http import HttpResponse, StreamingHttpResponse
 from django.contrib import admin
 from django.db.models import Count
 from .models import Test, Question, Variant, TestResult, Student, StudentGroup, Teacher
@@ -39,6 +39,12 @@ def meanrow(row):
 
     
 def get_group_results(modeladmin, request, queryset):
+
+    # в базе хранятся answers, result
+    # answers - сырые результаты
+    # result - пересчитанные
+    # ?
+    
     response = HttpResponse(content_type='text/csv; charset=utf-8')
     response['Content-Disposition'] = 'attachment; filename="groupresults.csv"'
     writer = csv.writer(response)
@@ -51,23 +57,55 @@ def get_group_results(modeladmin, request, queryset):
     groups = meta.tables['exam_studentgroup']
     testresults = meta.tables['exam_testresult']
     groupnames = [g.name for g in queryset.all()]
-    allresults = session.query(students.c.surname, students.c.name, students.c.middlename, tests.c.title, testresults.c.result, groups.c.name).filter(groups.c.name.in_(groupnames)).join(testresults).join(tests).join(groups)
-            
-    outcsv = []
+    allresults = session.query(students.c.surname, students.c.name, students.c.middlename, tests.c.title, testresults.c.answers, testresults.c.result, groups.c.name).filter(groups.c.name.in_(groupnames)).join(testresults).join(tests).join(groups)
+
+    rowlist = []
+
     for i, r in enumerate(allresults):
-        for k in r[4].keys():
-            row = u"""{0} {1} {2};{5};Тест "{3}";{4}""".format(r[0], r[1], r[2], r[3], (u"%s;%.2f" % (k, r[4][k]) if isinstance(r[4][k], int) else u"%s;%s" % (k,r[4][k].values()[0])), r[5])
-            outcsv.append(row)
-    outcsv = "\n".join(outcsv)
+        #row = {"name":"", "group":"", "test":""}
+        #rescoeffs = {} 
+        for k in r[5].keys():
+            for kk in r[5][k].keys():
+                #if kk not in rescoeffs.keys():
+                #    rescoeffs[kk] = 0
+                #else:
+                #    rescoeffs[kk] = rescoeffs[kk] + r[5][k][kk]
+                rowlist.append(
+                    {
+                        "name": " ".join(r[0:3]),
+                        "group": r[6],
+                        "test": r[3],
+                        "resname": k,
+                        "resvalue":r[5][k][kk] 
+                    }
+                )
 
-    df = pd.read_csv(StringIO(outcsv), sep=';', header=None, names=['name', 'group', 'test', 'resname', 'resvalue'])
-    cols = ['test', 'name', 'group', 'resname', 'resvalue']
-    df = df[cols]
-    dfgroupped = df.groupby(['test', 'resname', 'group', 'name'])['resvalue'].sum().unstack(['group', 'name'])
-    summary_ave_data = dfgroupped.copy()
-    summary_ave_data['average'] = summary_ave_data.apply(meanrow, axis=1)
 
-    summary_ave_data.to_csv(response , sep=';')
+    outdf = pd.DataFrame(rowlist)
+    #cls = ['name', 'group', 'test', 'resname', 'resvalue']
+    #cols = sorted([c for c in outdf.columns.tolist() if c not in cls], key=lambda x: int(x))
+    #outdf = outdf[cls + cols]
+
+    #cls = ['name', 'group', 'test']
+    #cols = [c for c in outdf.columns.tolist() if c not in cls]
+    #outdf = outdf[cls + cols]
+
+    #outdf = pd.melt(outdf, id_vars=['name', 'group', 'test'], value_vars=cols)
+    outdf['resname'] = outdf['resname'].astype('int')
+    outdf = outdf.sort_values(['resname',], ascending=True).groupby(['test', 'resname', 'group', 'name'])['resvalue'].sum().unstack(['group', 'name'])
+
+    sio = StringIO()
+    xlswriter = pd.ExcelWriter(sio, engine='xlsxwriter')
+    outdf.to_excel(xlswriter)
+    xlswriter.save()
+    xlswriter.close()
+    sio.seek(0)
+    #workbook = sio.getvalue()
+    response = StreamingHttpResponse(sio.read(), content_type='application/vnd.openxmlformats-officedocument.spreadsheetml.sheet')
+    response['Content-Disposition'] = 'attachment; filename=groupresults.xlsx'
+    
+    #summary_ave_data = dfgroupped.copy()
+    #outdf.to_csv(response , sep=';')
 
     return response
 
