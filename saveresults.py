@@ -1,6 +1,7 @@
 #!/usr/bin/env python
 # encoding: utf-8
 
+import pprint
 import psycopg2
 import sqlalchemy
 import pandas as pd
@@ -8,6 +9,7 @@ from numpy import nanmean
 from sqlalchemy import create_engine, func
 from sqlalchemy.orm import sessionmaker
 from StringIO import StringIO
+pp = pprint.PrettyPrinter(indent=4)
 
 def connect(user, password, db, host='localhost', port=5432):
     url = 'postgresql://{}:{}@{}:{}/{}'
@@ -36,24 +38,39 @@ students = meta.tables['exam_student']
 groups = meta.tables['exam_studentgroup']
 testresults = meta.tables['exam_testresult']
 
-allresults = session.query(students.c.surname, students.c.name, students.c.middlename, tests.c.title, testresults.c.result, groups.c.name).filter(tests.c.title.in_(('Общежитие', "Учебный процесс"))).join(testresults).join(tests).join(groups)
-outcsv = []
-for i, r in enumerate(allresults):
-    for k in r[4].keys():
-        ##r[4][k] = r[4][k].values()[0]
-        #print r[4][k].values()
-        #print ("%s;%.2f" % (k, r[4][k]) if isinstance(r[4][k], int) else "%s;%s" % (k,r[4][k].values()[0]))
-        outcsv.append(u"""{0} {1} {2};{5};Тест "{3}";{4}""".format(r[0], r[1], r[2], r[3], ("%s;%.2f" % (k, r[4][k]) if isinstance(r[4][k], int) else "%s;%s" % (k,r[4][k])), r[5]))
+restosave = ['Общежитие', "Учебный процесс"]
+#restosave = ["Учебный процесс"]
+
+#restosave = ["Тест №2", "Тест №3"]
+allresults = session.query(students.c.surname, students.c.name, students.c.middlename, tests.c.title, testresults.c.answers, testresults.c.result, groups.c.name).filter(tests.c.title.in_(restosave)).join(testresults).join(tests).join(groups).limit(8)
+rowlist = []
+
+for r in allresults:
+    row = {"name":"", "group":"", "test":""}
+    rescoeffs = {}
+
+    pp.pprint(r[5])
+    
+    for k in sorted(r[5].keys(), key=lambda x: int(x)):
+        rescoeffs[k] = r[5][k].values()[0]
         
-outcsv = "\n".join(outcsv)
+            
+    row['name'] = " ".join(r[0:3])
+    row['group'] = r[6]
+    row['test'] = r[3]
 
-df = pd.read_csv(StringIO(outcsv), sep=';', header=None, names=['name', 'group', 'test', 'resname', 'resvalue'])
-cols = ['test', 'name', 'group', 'resname', 'resvalue']
-df = df[cols]
-dfgroupped = df.groupby(['test', 'resname', 'group', 'name'])['resvalue'].sum().unstack(['group', 'name'])
-summary_ave_data = dfgroupped.copy()
-summary_ave_data['average'] = summary_ave_data.apply(meanrow, axis=1)
-summary_ave_data.to_excel('alldatafromdb_12.04.17.xlsx')
-summary_ave_data.to_csv('alldatafromdb_12.04.17.csv', sep=';')
+    for rk in rescoeffs.keys():
+        if rk not in row.keys():
+            row[rk] = rescoeffs[rk]
 
-#dfgroupped.to_csv('alldatafromdb_12.04.csv', sep=';')
+    print row
+    rowlist.append(row)
+
+
+outdf = pd.DataFrame(rowlist)
+cls = ['name', 'group', 'test']
+cols = sorted([c for c in outdf.columns.tolist() if c not in cls], key=lambda x: int(x))
+outdf = outdf[cls + cols]
+print outdf
+
+# это для тестов, выгружается в админке, в группах
