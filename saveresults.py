@@ -38,39 +38,32 @@ students = meta.tables['exam_student']
 groups = meta.tables['exam_studentgroup']
 testresults = meta.tables['exam_testresult']
 
-restosave = ['Общежитие', "Учебный процесс"]
+#restosave = ['Общежитие', "Учебный процесс", "Тест №2", "Тест №3"]
 #restosave = ["Учебный процесс"]
 
 #restosave = ["Тест №2", "Тест №3"]
-allresults = session.query(students.c.surname, students.c.name, students.c.middlename, tests.c.title, testresults.c.answers, testresults.c.result, groups.c.name).filter(tests.c.title.in_(restosave)).join(testresults).join(tests).join(groups).limit(8)
+restosave = ["Тест №2",]
+allresults = session.query(students.c.surname, students.c.name, students.c.middlename, tests.c.title, testresults.c.answers, testresults.c.result, groups.c.name).filter(tests.c.title.in_(restosave)).join(testresults).join(tests).join(groups).limit(2)
+
 rowlist = []
 
 for r in allresults:
-    row = {"name":"", "group":"", "test":""}
-    rescoeffs = {}
-
-    pp.pprint(r[5])
-    
-    for k in sorted(r[5].keys(), key=lambda x: int(x)):
-        rescoeffs[k] = r[5][k].values()[0]
+    questions = {}
+    for q in sorted(r[5].keys(), key=lambda x: int(x)):
+        questions[q] = r[5][q]
         
-            
-    row['name'] = " ".join(r[0:3])
-    row['group'] = r[6]
-    row['test'] = r[3]
-
-    for rk in rescoeffs.keys():
-        if rk not in row.keys():
-            row[rk] = rescoeffs[rk]
-
-    print row
-    rowlist.append(row)
+    for q in questions.keys():
+        for a in questions[q]:
+            rowlist.append([" ".join(r[0:3]), r[6], r[3], q, a, questions[q][a]])
 
 
 outdf = pd.DataFrame(rowlist)
-cls = ['name', 'group', 'test']
-cols = sorted([c for c in outdf.columns.tolist() if c not in cls], key=lambda x: int(x))
-outdf = outdf[cls + cols]
-print outdf
+
+cls = ['name', 'group', 'test', 'question', 'parameter', 'value']
+outdf.columns = cls
+outdf = outdf[['test', 'group', 'name', 'question', 'parameter', 'value']]
+#outdf = outdf.groupby(['name', 'group', 'test', 'question'])
+outdf = pd.pivot_table(outdf, index=['group', 'name', 'test', 'question'], columns='parameter', values='value', aggfunc='first')
+print outdf.reset_index()
 
 # это для тестов, выгружается в админке, в группах
