@@ -39,16 +39,9 @@ def meanrow(row):
 
     
 def get_group_results(modeladmin, request, queryset):
-
-    # в базе хранятся answers, result
-    # answers - сырые результаты
-    # result - пересчитанные
-    # ?
-    
     response = HttpResponse(content_type='text/csv; charset=utf-8')
     response['Content-Disposition'] = 'attachment; filename="groupresults.csv"'
     writer = csv.writer(response)
-
     con, meta = connect('exam', 'exam', 'exam')
     Session = sessionmaker(bind=con)
     session = Session()
@@ -57,58 +50,58 @@ def get_group_results(modeladmin, request, queryset):
     groups = meta.tables['exam_studentgroup']
     testresults = meta.tables['exam_testresult']
     groupnames = [g.name for g in queryset.all()]
-    allresults = session.query(students.c.surname, students.c.name, students.c.middlename, tests.c.title, testresults.c.answers, testresults.c.result, groups.c.name).filter(groups.c.name.in_(groupnames)).join(testresults).join(tests).join(groups)
+    version = "v2"
+    # V1
+    if version == "v1":
+        allresults = session.query(students.c.surname, students.c.name, students.c.middlename, tests.c.title, testresults.c.result, groups.c.name).filter(groups.c.name.in_(groupnames)).join(testresults).join(tests).join(groups)
+        outcsv = []
+        for i, r in enumerate(allresults):
+            for k in r[4].keys():
+                row = u"""{0} {1} {2};{5};Тест "{3}";{4}""".format(r[0], r[1], r[2], r[3], (u"%s;%.2f" % (k, r[4][k]) if isinstance(r[4][k], int) else u"%s;%s" % (k,r[4][k].values()[0])), r[5])
+                outcsv.append(row)
+        outcsv = "\n".join(outcsv)
+                
+        df = pd.read_csv(StringIO(outcsv), sep=';', header=None, names=['name', 'group', 'test', 'resname', 'resvalue'])
+        cols = ['test', 'name', 'group', 'resname', 'resvalue']
+        df = df[cols]
+        dfgroupped = df.groupby(['test', 'resname', 'group', 'name'])['resvalue'].sum().unstack(['group', 'name'])
+        summary_ave_data = dfgroupped.copy()
+        summary_ave_data['average'] = summary_ave_data.apply(meanrow, axis=1)
+    # V2
+    else:
+        allresults = session.query(students.c.surname, students.c.name, students.c.middlename, tests.c.title, testresults.c.answers, testresults.c.result, groups.c.name).filter(groups.c.name.in_(groupnames)).join(testresults).join(tests).join(groups)
+        rowlist = []
+        for r in allresults:
+            questions = {}
+            answers = {}
+            for q in sorted(r[5].keys(), key=lambda x: int(x)):
+                questions[q] = r[5][q]
+            for q in questions.keys():
+                for a in questions[q]:
+                    if a not in answers.keys():
+                        answers[a] = questions[q][a]
+                    else:
+                        answers[a] = answers[a] + questions[q][a]
+            for a in answers.keys():
+                rowlist.append([" ".join(r[0:3]), r[6], r[3], a, answers[a]])
+            #for a in questions[q]:
+            #    rowlist.append([" ".join(r[0:3]), r[6], r[3], q, a, questions[q][a]])
+            
+        outdf = pd.DataFrame(rowlist)
+        # outdf = pd.read_sql(allresults.statement, con)
 
-    rowlist = []
+        cls = ['name', 'group', 'test', 'parameter', 'value']
+        outdf.columns = cls
+        outdf = outdf[['test', 'name', 'group', 'parameter', 'value']]
+        # print outdf
+        summary_ave_data = outdf.groupby(['test', 'name', 'group', 'parameter'])['value'].sum().unstack(['group', 'parameter']).fillna(0)
+        # summary_ave_data['average'] = summary_ave_data.apply(nanmean, axis=1)
+        summary_ave_data['sum'] = summary_ave_data.apply(sum, axis=1)
 
-    for i, r in enumerate(allresults):
-        #row = {"name":"", "group":"", "test":""}
-        #rescoeffs = {} 
-        for k in r[5].keys():
-            for kk in r[5][k].keys():
-                #if kk not in rescoeffs.keys():
-                #    rescoeffs[kk] = 0
-                #else:
-                #    rescoeffs[kk] = rescoeffs[kk] + r[5][k][kk]
-                rowlist.append(
-                    {
-                        "name": " ".join(r[0:3]),
-                        "group": r[6],
-                        "test": r[3],
-                        "resname": k,
-                        "resvalue":r[5][k][kk] 
-                    }
-                )
-
-
-    outdf = pd.DataFrame(rowlist)
-    #cls = ['name', 'group', 'test', 'resname', 'resvalue']
-    #cols = sorted([c for c in outdf.columns.tolist() if c not in cls], key=lambda x: int(x))
-    #outdf = outdf[cls + cols]
-
-    #cls = ['name', 'group', 'test']
-    #cols = [c for c in outdf.columns.tolist() if c not in cls]
-    #outdf = outdf[cls + cols]
-
-    #outdf = pd.melt(outdf, id_vars=['name', 'group', 'test'], value_vars=cols)
-    outdf['resname'] = outdf['resname'].astype('int')
-    outdf = outdf.sort_values(['resname',], ascending=True).groupby(['test', 'resname', 'group', 'name'])['resvalue'].sum().unstack(['group', 'name'])
-
-    sio = StringIO()
-    xlswriter = pd.ExcelWriter(sio, engine='xlsxwriter')
-    outdf.to_excel(xlswriter)
-    xlswriter.save()
-    xlswriter.close()
-    sio.seek(0)
-    #workbook = sio.getvalue()
-    response = StreamingHttpResponse(sio.read(), content_type='application/vnd.openxmlformats-officedocument.spreadsheetml.sheet')
-    response['Content-Disposition'] = 'attachment; filename=groupresults.xlsx'
+    summary_ave_data.to_csv(response , sep=';', encoding='utf-8', float_format='%g')
     
-    #summary_ave_data = dfgroupped.copy()
-    #outdf.to_csv(response , sep=';')
-
     return response
-
+    
 get_group_results.short_description = "Скачать результаты"
 
 
