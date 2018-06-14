@@ -15,6 +15,7 @@ def connect(user, password, db, host='localhost', port=5432):
     url = 'postgresql://{}:{}@{}:{}/{}'
     url = url.format(user, password, host, port, db)
     con = sqlalchemy.create_engine(url, client_encoding='utf8')
+    con.execution_options(stream_results=True)
     meta = sqlalchemy.MetaData(bind=con, reflect=True)
     return con, meta
 
@@ -38,15 +39,15 @@ students = meta.tables['exam_student']
 groups = meta.tables['exam_studentgroup']
 testresults = meta.tables['exam_testresult']
 
-#restosave = ['Общежитие', "Учебный процесс", "Тест №2", "Тест №3"]
-#restosave = ["Учебный процесс"]
+restosave = ['Общежитие', "Учебный процесс", "Тест №2", "Тест №3"]
+# restosave = ["Учебный процесс"]
 
 #restosave = ["Тест №2", "Тест №3"]
-restosave = ["Тест №2",]
-allresults = session.query(students.c.surname, students.c.name, students.c.middlename, tests.c.title, testresults.c.answers, testresults.c.result, groups.c.name).filter(tests.c.title.in_(restosave)).join(testresults).join(tests).join(groups).limit(2)
+#restosave = ["Тест №3",]
+
+allresults = session.query(students.c.surname, students.c.name, students.c.middlename, tests.c.title, testresults.c.answers, testresults.c.result, groups.c.name).filter(tests.c.title.in_(restosave)).join(testresults).join(tests).join(groups)
 
 rowlist = []
-
 for r in allresults:
     questions = {}
     for q in sorted(r[5].keys(), key=lambda x: int(x)):
@@ -56,14 +57,16 @@ for r in allresults:
         for a in questions[q]:
             rowlist.append([" ".join(r[0:3]), r[6], r[3], q, a, questions[q][a]])
 
-
 outdf = pd.DataFrame(rowlist)
-
+#outdf = pd.read_sql(allresults.statement, con)
+#
 cls = ['name', 'group', 'test', 'question', 'parameter', 'value']
 outdf.columns = cls
 outdf = outdf[['test', 'group', 'name', 'question', 'parameter', 'value']]
 #outdf = outdf.groupby(['name', 'group', 'test', 'question'])
 outdf = pd.pivot_table(outdf, index=['group', 'name', 'test', 'question'], columns='parameter', values='value', aggfunc='first')
-print outdf.reset_index()
-
+outdf = outdf.reset_index()
+params = [x for x in outdf.columns if x not in cls]
+outdf['sum'] = outdf[params].sum(axis=1)
+print outdf
 # это для тестов, выгружается в админке, в группах
